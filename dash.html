@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hotel Lumanti - Employee Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --primary: #c9a961;
+  --primary-dark: #a88b4d;
+  --bg-light: #f5f7fa;
+  --bg-white: #ffffff;
+  --text-dark: #2d3748;
+  --text-muted: #718096;
+  --border: #e2e8f0;
+  --success: #48bb78;
+  --warning: #ed8936;
+  --danger: #f56565;
+  --info: #4299e1;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg-light);
+  color: var(--text-dark);
+  line-height: 1.6;
+}
+
+/* Login Screen */
+.login-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+  background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+}
+
+.login-box {
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  width: 100%;
+  max-width: 400px;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.login-header h1 {
+  font-size: 28px;
+  color: var(--text-dark);
+  margin-bottom: 8px;
+}
+
+.login-header p {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.login-form .form-group {
+  margin-bottom: 20px;
+}
+
+.login-form label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.login-form input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.3s;
+}
+
+.login-form input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.btn-login {
+  width: 100%;
+  padding: 14px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.btn-login:hover {
+  background: var(--primary-dark);
+}
+
+.btn-login:disabled {
+  background: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.error-message {
+  background: #fee;
+  color: var(--danger);
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 20px;
+  display: none;
+}
+
+.error-message.show {
+  display: block;
+}
+
+/* Dashboard */
+.dashboard-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 15px;
+  display: none;
+}
+
+.dashboard-container.active {
+  display: block;
+}
+
+.dashboard-header {
+  background: var(--bg-white);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.header-left h1 {
+  font-size: 22px;
+  color: var(--text-dark);
+  margin-bottom: 4px;
+}
+
+.header-left p {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.header-right {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--primary-dark);
+}
+
+.btn-success {
+  background: var(--success);
+  color: white;
+}
+
+.btn-success:hover {
+  background: #38a169;
+}
+
+.btn-secondary {
+  background: var(--bg-light);
+  color: var(--text-dark);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: #e2e8f0;
+}
+
+/* Quick Date Navigation */
+.date-nav {
+  background: var(--bg-white);
+  padding: 15px 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+}
+
+.date-nav-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 12px;
+  display: block;
+}
+
+.quick-dates {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 15px;
+}
+
+.quick-date-btn {
+  padding: 8px 16px;
+  background: var(--bg-light);
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+  color: var(--text-dark);
+}
+
+.quick-date-btn:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.quick-date-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.custom-date-picker {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.custom-date-picker input {
+  flex: 1;
+  min-width: 150px;
+  padding: 10px 12px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  background: var(--bg-white);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  border-left: 4px solid var(--primary);
+}
+
+.stat-card.daycation {
+  border-left-color: #fbbf24;
+}
+
+.stat-card.staycation {
+  border-left-color: #60a5fa;
+}
+
+.stat-card.fullstay {
+  border-left-color: #34d399;
+}
+
+.stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.stat-title {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-time {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 6px;
+}
+
+.stat-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.bookings-section {
+  background: var(--bg-white);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.section-header h2 {
+  font-size: 18px;
+  color: var(--text-dark);
+}
+
+.filter-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-tab {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.filter-tab.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+/* Mobile-Friendly Bookings */
+.bookings-table {
+  width: 100%;
+  border-collapse: collapse;
+  display: none;
+}
+
+.bookings-cards {
+  display: none;
+}
+
+.booking-card {
+  background: var(--bg-light);
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 12px;
+  border-left: 4px solid var(--primary);
+}
+
+.booking-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 12px;
+}
+
+.booking-guest {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.booking-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-label {
+  color: var(--text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.detail-value {
+  color: var(--text-dark);
+  font-weight: 500;
+}
+
+.booking-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status-pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-checked-in {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-checked-out {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.status-cancelled {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.action-btn {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-edit {
+  background: var(--info);
+  color: white;
+}
+
+.btn-edit:hover {
+  background: #3182ce;
+}
+
+.btn-delete {
+  background: var(--danger);
+  color: white;
+}
+
+.btn-delete:hover {
+  background: #e53e3e;
+}
+
+/* Desktop Table */
+@media (min-width: 769px) {
+  .bookings-table {
+    display: table;
+  }
+
+  .bookings-table thead {
+    background: var(--bg-light);
+  }
+
+  .bookings-table th {
+    padding: 12px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .bookings-table td {
+    padding: 15px 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-dark);
+  }
+
+  .bookings-table tbody tr:hover {
+    background: #f9fafb;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 6px;
+  }
+
+  .action-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .bookings-cards {
+    display: block;
+  }
+}
+
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.modal.active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-content {
+  background: var(--bg-white);
+  border-radius: 8px;
+  max-width: 600px;
+  width: 100%;
+  animation: slideUp 0.3s;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  padding: 20px 25px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-header h3 {
+  font-size: 18px;
+  color: var(--text-dark);
+}
+
+.modal-body {
+  padding: 25px;
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: var(--text-dark);
+  font-weight: 600;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--text-dark);
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.modal-footer {
+  padding: 15px 25px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn-cancel {
+  padding: 10px 20px;
+  background: var(--bg-light);
+  color: var(--text-dark);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-save {
+  padding: 10px 20px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-save:hover {
+  background: var(--primary-dark);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+
+.empty-state p {
+  font-size: 15px;
+}
+
+.spinner {
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 0.8s linear infinite;
+  margin: 40px auto;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: var(--bg-white);
+  padding: 16px 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  display: none;
+  align-items: center;
+  gap: 12px;
+  z-index: 2000;
+  animation: slideInRight 0.3s;
+  max-width: 350px;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.notification.show {
+  display: flex;
+}
+
+.notification.success {
+  border-left: 4px solid var(--success);
+}
+
+.notification.error {
+  border-left: 4px solid var(--danger);
+}
+
+@media (max-width: 600px) {
+  .notification {
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+}
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.37.0",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0"
+  }
+}
+</script>
+</head>
+<body>
+
+<!-- Login Screen -->
+<div class="login-container" id="loginContainer">
+  <div class="login-box">
+    <div class="login-header">
+      <h1>🏨 Hotel Lumanti</h1>
+      <p>Employee Dashboard Login</p>
+    </div>
+    
+    <div class="error-message" id="loginError"></div>
+    
+    <form class="login-form" id="loginForm" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="loginEmail" required placeholder="employee@hotellumanti.com">
+      </div>
+      
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="loginPassword" required placeholder="Enter your password">
+      </div>
+      
+      <button type="submit" class="btn-login" id="loginBtn">
+        Sign In
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div class="dashboard-container" id="dashboardContainer">
+  <div class="dashboard-header">
+    <div class="header-left">
+      <h1>Booking Dashboard</h1>
+      <p id="userEmail">employee@hotellumanti.com</p>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-success" onclick="openAddModal()">
+        ➕ New Booking
+      </button>
+      <button class="btn btn-primary" onclick="refreshData()">
+        🔄 Refresh
+      </button>
+      <button class="btn btn-secondary" onclick="handleLogout()">
+        🚪 Log Out
+      </button>
+    </div>
+  </div>
+
+  <div class="date-nav">
+    <span class="date-nav-label">Quick Date Selection</span>
+    <div class="quick-dates">
+      <button class="quick-date-btn" id="btnToday" onclick="setQuickDate('today')">Today</button>
+      <button class="quick-date-btn" id="btnTomorrow" onclick="setQuickDate('tomorrow')">Tomorrow</button>
+      <button class="quick-date-btn" id="btnWeek" onclick="setQuickDate('week')">This Week</button>
+      <button class="quick-date-btn" id="btnMonth" onclick="setQuickDate('month')">This Month</button>
+    </div>
+    
+    <div class="custom-date-picker">
+      <input type="date" id="dateFilter" onchange="loadBookings()">
+      <button class="btn btn-secondary" onclick="resetDateFilter()">Show All</button>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card daycation">
+      <div class="stat-header">
+        <span class="stat-title">Daycation</span>
+        <span class="stat-time">12 PM - 5 PM</span>
+      </div>
+      <div class="stat-value" id="daycationCount">0</div>
+      <div class="stat-subtitle">Available: <span id="daycationAvail">10 / 10</span></div>
+    </div>
+
+    <div class="stat-card staycation">
+      <div class="stat-header">
+        <span class="stat-title">Staycation</span>
+        <span class="stat-time">7 PM - 12 AM</span>
+      </div>
+      <div class="stat-value" id="staycationCount">0</div>
+      <div class="stat-subtitle">Available: <span id="staycationAvail">10 / 10</span></div>
+    </div>
+
+    <div class="stat-card fullstay">
+      <div class="stat-header">
+        <span class="stat-title">Full Stay</span>
+        <span class="stat-time">12 PM - 12 PM</span>
+      </div>
+      <div class="stat-value" id="fullstayCount">0</div>
+      <div class="stat-subtitle">Available: <span id="fullstayAvail">10 / 10</span></div>
+    </div>
+  </div>
+
+  <div class="bookings-section">
+    <div class="section-header">
+      <h2>Current Bookings</h2>
+      <div class="filter-tabs">
+        <button class="filter-tab active" onclick="filterStatus('all')">All</button>
+        <button class="filter-tab" onclick="filterStatus('pending')">Pending</button>
+        <button class="filter-tab" onclick="filterStatus('checked-in')">Checked In</button>
+        <button class="filter-tab" onclick="filterStatus('checked-out')">Checked Out</button>
+        <button class="filter-tab" onclick="filterStatus('cancelled')">Cancelled</button>
+      </div>
+    </div>
+
+    <div id="bookingsContainer">
+      <div class="spinner"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit/Add Modal -->
+<div class="modal" id="bookingModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 id="modalTitle">Edit Booking</h3>
+    </div>
+    <div class="modal-body">
+      <form id="bookingForm">
+        <input type="hidden" id="bookingId">
+        
+        <div class="form-group">
+          <label>Guest Name *</label>
+          <input type="text" id="guestName" required placeholder="John Doe">
+        </div>
+
+        <div class="form-group">
+          <label>Phone Number *</label>
+          <input type="tel" id="guestPhone" required placeholder="+977 9800000000">
+        </div>
+
+     
+
+        <div class="form-group">
+          <label>Check-in Date *</label>
+          <input type="date" id="checkInDate" required>
+        </div>
+
+        <div class="form-group">
+          <label>Arrival Time *</label>
+          <input type="time" id="arrivalTime" required>
+        </div>
+
+        <div class="form-group">
+          <label>Stay Type *</label>
+          <select id="stayType" required>
+            <option value="Daycation">Daycation (12 PM - 5 PM)</option>
+            <option value="Staycation">Staycation (7 PM - 12 AM)</option>
+            <option value="Full Stay">Full Stay (12 PM - 12 PM)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Room Type *</label>
+          <select id="roomType" required>
+            <option value="Mini">Mini</option>
+            <option value="Deluxe">Deluxe</option>
+            <option value="Classic">Classic</option>
+            <option value="Suite">Suite</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Total Amount (Rs)</label>
+          <input type="number" id="totalAmount" placeholder="5000">
+        </div>
+
+        <div class="form-group">
+          <label>Status *</label>
+          <select id="bookingStatus" required>
+            <option value="pending">Pending</option>
+            <option value="checked-in">Checked In</option>
+            <option value="checked-out">Checked Out</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveBooking()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<div class="notification" id="notification">
+  <span id="notificationMessage"></span>
+</div>
+
+<script>
+// ========================================
+// CONFIGURATION
+// ========================================
+
+const SUPABASE_URL = 'https://fzwnglhxtmtltpysdzma.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6d25nbGh4dG10bHRweXNkem1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1ODE0MzAsImV4cCI6MjA4NDE1NzQzMH0.PuES2nphqkKU-FqzBge6LlptVibSfeTQcUExEdfTleg';
+
+let supabaseClient = null;
+let allBookings = [];
+let currentFilter = 'all';
+let selectedDate = null;
+let currentUser = null;
+let dateMode = 'today';
+
+// ========================================
+// INITIALIZATION
+// ========================================
+
+try {
+  const { createClient } = supabase;
+  supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  console.log('✅ Supabase connected');
+} catch (error) {
+  console.error('❌ Supabase init failed:', error);
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+  const session = await checkSession();
+  if (session) {
+    showDashboard(session.user);
+  } else {
+    showLogin();
+  }
+});
+
+function showLogin() {
+  document.getElementById('loginContainer').style.display = 'flex';
+  document.getElementById('dashboardContainer').classList.remove('active');
+  currentUser = null;
+}
+
+function showDashboard(user) {
+  currentUser = user;
+  document.getElementById('loginContainer').style.display = 'none';
+  document.getElementById('dashboardContainer').classList.add('active');
+  document.getElementById('userEmail').textContent = user.email;
+  
+  // Set default view to today
+  setQuickDate('today');
+}
+
+// ========================================
+// AUTHENTICATION
+// ========================================
+
+async function checkSession() {
+  try {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    return session;
+  } catch (error) {
+    console.error('Session check failed:', error);
+    return null;
+  }
+}
+
+async function handleLogin(event) {
+  event.preventDefault();
+  
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPassword').value;
+  const loginBtn = document.getElementById('loginBtn');
+  const errorDiv = document.getElementById('loginError');
+  
+  loginBtn.disabled = true;
+  loginBtn.textContent = 'Signing in...';
+  errorDiv.classList.remove('show');
+  
+  try {
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+      email: email,
+      password: password
+    });
+    
+    if (error) throw error;
+    
+    showDashboard(data.user);
+    showNotification('Login successful!', 'success');
+    
+  } catch (error) {
+    console.error('Login error:', error);
+    errorDiv.textContent = error.message || 'Invalid credentials';
+    errorDiv.classList.add('show');
+  } finally {
+    loginBtn.disabled = false;
+    loginBtn.textContent = 'Sign In';
+  }
+}
+
+async function handleLogout() {
+  if (!confirm('Are you sure you want to log out?')) return;
+  
+  try {
+    await supabaseClient.auth.signOut();
+    showLogin();
+    showNotification('Logged out successfully', 'success');
+  } catch (error) {
+    console.error('Logout error:', error);
+    showNotification('Logout failed', 'error');
+  }
+}
+
+// ========================================
+// DATE HANDLING
+// ========================================
+
+function setQuickDate(mode) {
+  dateMode = mode;
+  const today = new Date();
+  
+  // Remove active class from all buttons
+  document.querySelectorAll('.quick-date-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  
+  // Add active class based on mode
+  const btnIdMap = {
+    'today': 'btnToday',
+    'tomorrow': 'btnTomorrow',
+    'week': 'btnWeek',
+    'month': 'btnMonth'
+  };
+  if(btnIdMap[mode]) document.getElementById(btnIdMap[mode]).classList.add('active');
+  
+  switch(mode) {
+    case 'today':
+      selectedDate = today.toISOString().split('T')[0];
+      document.getElementById('dateFilter').value = selectedDate;
+      break;
+    case 'tomorrow':
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      selectedDate = tomorrow.toISOString().split('T')[0];
+      document.getElementById('dateFilter').value = selectedDate;
+      break;
+    default:
+      selectedDate = null;
+      document.getElementById('dateFilter').value = '';
+      break;
+  }
+  
+  loadBookings();
+}
+
+function resetDateFilter() {
+  selectedDate = null;
+  dateMode = 'all';
+  document.getElementById('dateFilter').value = '';
+  document.querySelectorAll('.quick-date-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  loadBookings();
+}
+
+// ========================================
+// DATA LOADING
+// ========================================
+
+async function loadBookings() {
+  if (!supabaseClient) {
+    showNotification('Database not connected', 'error');
+    return;
+  }
+
+  const container = document.getElementById('bookingsContainer');
+  container.innerHTML = '<div class="spinner"></div>';
+
+  const customDate = document.getElementById('dateFilter').value;
+  if (customDate) {
+    selectedDate = customDate;
+    dateMode = 'custom';
+  }
+
+  try {
+    const { data: bookings, error } = await supabaseClient
+      .from('bookings')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    allBookings = bookings || [];
+    updateStats(allBookings);
+    displayBookings(allBookings);
+    
+  } catch (error) {
+    console.error('❌ Error loading bookings:', error);
+    showNotification('Error: ' + error.message, 'error');
+    container.innerHTML = `
+      <div class="empty-state">
+        <p style="color: #f56565;">⚠️ Failed to load bookings</p>
+        <p style="font-size: 14px; margin-top: 10px;">${error.message}</p>
+      </div>
+    `;
+  }
+}
+
+function updateStats(bookings) {
+  let filtered = bookings;
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  
+  if (selectedDate) {
+    filtered = bookings.filter(b => b.check_in_date === selectedDate);
+  } else if (dateMode === 'week') {
+    const weekEnd = new Date(today);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+    filtered = bookings.filter(b => {
+      const bDate = new Date(b.check_in_date);
+      return bDate >= today && bDate <= weekEnd;
+    });
+  } else if (dateMode === 'month') {
+    const month = today.getMonth();
+    const year = today.getFullYear();
+    filtered = bookings.filter(b => {
+      const bDate = new Date(b.check_in_date);
+      return bDate.getMonth() === month && bDate.getFullYear() === year;
+    });
+  }
+
+  const daycation = filtered.filter(b => b.stay_type === 'Daycation' && b.status !== 'cancelled').length;
+  const staycation = filtered.filter(b => b.stay_type === 'Staycation' && b.status !== 'cancelled').length;
+  const fullstay = filtered.filter(b => b.stay_type === 'Full Stay' && b.status !== 'cancelled').length;
+
+  document.getElementById('daycationCount').textContent = daycation;
+  document.getElementById('staycationCount').textContent = staycation;
+  document.getElementById('fullstayCount').textContent = fullstay;
+
+  document.getElementById('daycationAvail').textContent = `${Math.max(0, 10 - daycation)} / 10`;
+  document.getElementById('staycationAvail').textContent = `${Math.max(0, 10 - staycation)} / 10`;
+  document.getElementById('fullstayAvail').textContent = `${Math.max(0, 10 - fullstay)} / 10`;
+}
+
+function displayBookings(bookings) {
+  const container = document.getElementById('bookingsContainer');
+  let filtered = bookings;
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  
+  if (selectedDate) {
+    filtered = bookings.filter(b => b.check_in_date === selectedDate);
+  } else if (dateMode === 'week') {
+    const weekEnd = new Date(today);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+    filtered = bookings.filter(b => {
+      const bDate = new Date(b.check_in_date);
+      return bDate >= today && bDate <= weekEnd;
+    });
+  } else if (dateMode === 'month') {
+    const month = today.getMonth();
+    const year = today.getFullYear();
+    filtered = bookings.filter(b => {
+      const bDate = new Date(b.check_in_date);
+      return bDate.getMonth() === month && bDate.getFullYear() === year;
+    });
+  }
+
+  if (currentFilter !== 'all') {
+    filtered = filtered.filter(b => b.status === currentFilter);
+  }
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="empty-state"><p>No bookings found for the selected period.</p></div>';
+    return;
+  }
+
+  // Desktop Table
+  const tableHTML = `
+    <table class="bookings-table">
+      <thead>
+        <tr>
+          <th>Guest</th>
+          <th>Phone</th>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Room</th>
+          <th>Type</th>
+          <th>Amount</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${filtered.map(booking => `
+          <tr>
+            <td><strong>${booking.full_name}</strong></td>
+            <td>${booking.phone_number}</td>
+            <td>${formatDate(booking.check_in_date)}</td>
+            <td>${formatTime(booking.arrival_time)}</td>
+            <td>${booking.room_type}</td>
+            <td>${booking.stay_type}</td>
+            <td>Rs ${booking.total_amount || 0}</td>
+            <td><span class="status-badge status-${booking.status}">${booking.status}</span></td>
+            <td>
+              <div class="action-buttons">
+                <button class="action-btn btn-edit" onclick="openEditModal(${booking.id})">✏️</button>
+                <button class="action-btn btn-delete" onclick="deleteBooking(${booking.id})">🗑️</button>
+              </div>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+
+  // Mobile Cards
+  const cardsHTML = `
+    <div class="bookings-cards">
+      ${filtered.map(booking => `
+        <div class="booking-card" style="border-left-color: ${booking.stay_type === 'Daycation' ? '#fbbf24' : booking.stay_type === 'Staycation' ? '#60a5fa' : '#34d399'}">
+          <div class="booking-card-header">
+            <div class="booking-guest">${booking.full_name}</div>
+            <span class="status-badge status-${booking.status}">${booking.status}</span>
+          </div>
+          <div class="booking-details">
+            <div class="detail-item"><span class="detail-label">Phone</span><span class="detail-value">${booking.phone_number}</span></div>
+            <div class="detail-item"><span class="detail-label">Date</span><span class="detail-value">${formatDate(booking.check_in_date)}</span></div>
+            <div class="detail-item"><span class="detail-label">Time</span><span class="detail-value">${formatTime(booking.arrival_time)}</span></div>
+            <div class="detail-item"><span class="detail-label">Room</span><span class="detail-value">${booking.room_type}</span></div>
+            <div class="detail-item"><span class="detail-label">Type</span><span class="detail-value">${booking.stay_type}</span></div>
+            <div class="detail-item"><span class="detail-label">Amount</span><span class="detail-value">Rs ${booking.total_amount || 0}</span></div>
+          </div>
+          <div class="booking-actions">
+            <button class="action-btn btn-edit" onclick="openEditModal(${booking.id})">✏️ Edit</button>
+            <button class="action-btn btn-delete" onclick="deleteBooking(${booking.id})">🗑️ Delete</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  container.innerHTML = tableHTML + cardsHTML;
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '-';
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function formatTime(time) {
+  if (!time) return '-';
+  const [hours, minutes] = time.split(':');
+  const hour = parseInt(hours);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const displayHour = hour % 12 || 12;
+  return `${displayHour}:${minutes} ${ampm}`;
+}
+
+function filterStatus(status) {
+  currentFilter = status;
+  document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  event.target.classList.add('active');
+  displayBookings(allBookings);
+}
+
+// ========================================
+// MODAL HANDLING
+// ========================================
+
+function openAddModal() {
+  document.getElementById('modalTitle').textContent = 'New Booking';
+  document.getElementById('bookingId').value = '';
+  document.getElementById('bookingForm').reset();
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('checkInDate').value = today;
+  document.getElementById('bookingModal').classList.add('active');
+}
+
+function openEditModal(bookingId) {
+  const booking = allBookings.find(b => b.id === bookingId);
+  if (!booking) return;
+
+  document.getElementById('modalTitle').textContent = 'Edit Booking';
+  document.getElementById('bookingId').value = booking.id;
+  document.getElementById('guestName').value = booking.full_name;
+  document.getElementById('guestPhone').value = booking.phone_number;
+  document.getElementById('checkInDate').value = booking.check_in_date;
+  document.getElementById('arrivalTime').value = booking.arrival_time || '';
+  document.getElementById('stayType').value = booking.stay_type;
+  document.getElementById('roomType').value = booking.room_type;
+  document.getElementById('totalAmount').value = booking.total_amount || '';
+  document.getElementById('bookingStatus').value = booking.status;
+
+  document.getElementById('bookingModal').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('bookingModal').classList.remove('active');
+}
+
+async function saveBooking() {
+  const id = document.getElementById('bookingId').value;
+  const data = {
+    full_name: document.getElementById('guestName').value.trim(),
+    phone_number: document.getElementById('guestPhone').value.trim(),
+    check_in_date: document.getElementById('checkInDate').value,
+    arrival_time: document.getElementById('arrivalTime').value,
+    stay_type: document.getElementById('stayType').value,
+    room_type: document.getElementById('roomType').value,
+    total_amount: parseInt(document.getElementById('totalAmount').value) || 0,
+    status: document.getElementById('bookingStatus').value
+  };
+
+  if(!data.full_name || !data.phone_number || !data.check_in_date) {
+    showNotification('Please fill in required fields', 'error');
+    return;
+  }
+
+  try {
+    if (id) {
+      const { error } = await supabaseClient.from('bookings').update(data).eq('id', id);
+      if (error) throw error;
+      showNotification('Booking updated', 'success');
+    } else {
+      const { error } = await supabaseClient.from('bookings').insert([data]);
+      if (error) throw error;
+      showNotification('Booking created', 'success');
+    }
+    closeModal();
+    loadBookings();
+  } catch (error) {
+    showNotification('Error: ' + error.message, 'error');
+  }
+}
+
+async function deleteBooking(bookingId) {
+  if (!confirm('Permanently delete this booking?')) return;
+  try {
+    const { error } = await supabaseClient.from('bookings').delete().eq('id', bookingId);
+    if (error) throw error;
+    showNotification('Deleted successfully', 'success');
+    loadBookings();
+  } catch (error) {
+    showNotification('Error: ' + error.message, 'error');
+  }
+}
+
+function refreshData() {
+  loadBookings();
+  showNotification('Data refreshed', 'success');
+}
+
+function showNotification(message, type) {
+  const notification = document.getElementById('notification');
+  const messageEl = document.getElementById('notificationMessage');
+  messageEl.textContent = message;
+  notification.className = `notification ${type} show`;
+  setTimeout(() => notification.classList.remove('show'), 3000);
+}
+
+// Close modal on outside click
+document.getElementById('bookingModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+</script>
+
+</body>
+</html>

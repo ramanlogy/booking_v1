@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hotel Lumanti - Reservation</title>
+<link rel="icon" href="assets/favicon.ico" type="image/x-icon">
+ <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png"> 
+ <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png"> 
+ <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png"> 
+<link rel="manifest" href="/site.webmanifest">
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --primary: #c9a961;
+  --primary-dark: #a88b4d;
+  --bg-dark: #1a1a1a;
+  --bg-card: #2a2a2a;
+  --text-light: #f5f5f5;
+  --text-muted: #b0b0b0;
+  --border: #3a3a3a;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+  min-height: 100vh;
+  color: var(--text-light);
+  padding: 20px;
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0 15px;
+}
+
+.header {
+  text-align: center;
+  padding: 30px 0 40px;
+}
+
+.logo {
+  width: 120px;
+  height: auto;
+  margin-bottom: 20px;
+  opacity: 0.95;
+}
+
+.header h1 {
+  font-size: 28px;
+  font-weight: 300;
+  letter-spacing: 3px;
+  color: var(--primary);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.header p {
+  font-size: 14px;
+  color: var(--text-muted);
+  font-weight: 300;
+  letter-spacing: 1px;
+}
+
+.form-card {
+  background: var(--bg-card);
+  border-radius: 8px;
+  padding: 30px 25px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--border);
+}
+
+.success-message {
+  display: none;
+  background: linear-gradient(135deg, #2d4a2b 0%, #3d5a3b 100%);
+  color: #e8f5e9;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 25px;
+  text-align: center;
+  font-size: 14px;
+  border: 1px solid #4a6741;
+}
+
+.form-group {
+  margin-bottom: 24px;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+input, select {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--bg-dark);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-light);
+  font-size: 15px;
+  transition: all 0.3s;
+  font-family: inherit;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: #0f0f0f;
+}
+
+input.error {
+  border-color: #d32f2f;
+}
+
+input::placeholder {
+  color: #666;
+}
+
+.error-message {
+  color: #ff5252;
+  font-size: 12px;
+  margin-top: 6px;
+  display: none;
+}
+
+.error-message.show {
+  display: block;
+}
+
+.stay-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+.stay-option {
+  cursor: pointer;
+}
+
+.stay-option input[type="radio"] {
+  display: none;
+}
+
+.stay-card {
+  background: var(--bg-dark);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 18px;
+  text-align: center;
+  transition: all 0.3s;
+  height: 100%;
+}
+
+.stay-option:hover .stay-card {
+  border-color: var(--primary);
+  background: #0f0f0f;
+}
+
+.stay-option input:checked + .stay-card {
+  border-color: var(--primary);
+  background: linear-gradient(135deg, rgba(201, 169, 97, 0.1) 0%, rgba(201, 169, 97, 0.05) 100%);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+
+.stay-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.stay-card h4 {
+  font-size: 16px;
+  color: var(--primary);
+  margin-bottom: 4px;
+  font-weight: 400;
+}
+
+.stay-card p {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.room-selection {
+  display: grid;
+  gap: 14px;
+}
+
+.room-option {
+  cursor: pointer;
+}
+
+.room-option input[type="radio"] {
+  display: none;
+}
+
+.room-card {
+  background: var(--bg-dark);
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  transition: all 0.3s;
+  position: relative;
+}
+
+.room-option:hover .room-card {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.room-option input:checked + .room-card {
+  border-color: var(--primary);
+  border-width: 3px;
+  box-shadow: 0 0 0 3px rgba(201, 169, 97, 0.2);
+  background: linear-gradient(135deg, rgba(201, 169, 97, 0.08) 0%, rgba(201, 169, 97, 0.03) 100%);
+}
+
+.room-option input:checked + .room-card::before {
+  content: '✓';
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 32px;
+  height: 32px;
+  background: var(--primary);
+  color: var(--bg-dark);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: bold;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.room-image {
+  height: 240px;
+  position: relative;
+  background: #0a0a0a;
+  overflow: hidden;
+}
+
+.room-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.9;
+}
+
+.price-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: var(--primary);
+  color: var(--bg-dark);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  line-height: 1.3;
+}
+
+.price-badge .per-person {
+  font-size: 10px;
+  display: block;
+  opacity: 0.9;
+}
+
+.room-info {
+  padding: 16px;
+}
+
+.room-info h3 {
+  font-size: 17px;
+  color: var(--primary);
+  margin-bottom: 4px;
+  font-weight: 400;
+}
+
+.room-info p {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 14px;
+  background: var(--primary);
+  color: var(--bg-dark);
+  border: none;
+  border-radius: 4px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: all 0.3s;
+  margin-top: 10px;
+}
+
+.submit-btn:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(201, 169, 97, 0.3);
+}
+
+.arrow-right {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 8px solid #000000;
+  margin-left: 8px;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 1000;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.modal.active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-content {
+  background: var(--bg-card);
+  border-radius: 8px;
+  max-width: 500px;
+  width: 100%;
+  border: 1px solid var(--border);
+  animation: slideUp 0.3s;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+  padding: 20px 25px;
+  border-radius: 8px 8px 0 0;
+}
+
+.modal-header h3 {
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: 1px;
+  color: var(--bg-dark);
+}
+
+.modal-body {
+  padding: 25px;
+}
+
+.booking-details {
+  background: var(--bg-dark);
+  border-radius: 6px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-value {
+  font-size: 14px;
+  color: var(--text-light);
+  font-weight: 500;
+  text-align: right;
+}
+
+.total-row {
+  border-top: 2px solid var(--primary);
+  padding-top: 15px;
+  margin-top: 10px;
+}
+
+.total-row .detail-label {
+  color: var(--primary);
+  font-size: 14px;
+}
+
+.total-row .detail-value {
+  color: var(--primary);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.modal-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.btn {
+  padding: 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.3s;
+}
+
+.btn-secondary {
+  background: var(--bg-dark);
+  color: var(--text-light);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: #0f0f0f;
+  border-color: var(--primary);
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: var(--bg-dark);
+}
+
+.btn-primary:hover {
+  background: var(--primary-dark);
+}
+
+.back-icon {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #111;
+  color: #fff;
+  border-radius: 50%;
+  text-decoration: none;
+  font-size: 18px;
+  font-weight: bold;
+  box-shadow: 0 4px 10px rgba(231, 229, 229, 0.2);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.back-icon:hover {
+  background: black;
+  transform: translateX(-2px);
+}
+
+@media (max-width: 600px) {
+  .form-card {
+    padding: 25px 20px;
+  }
+  
+  .stay-options {
+    grid-template-columns: 1fr;
+  }
+  
+  .room-image {
+    height: 220px;
+  }
+  
+  .header h1 {
+    font-size: 20px;
+  }
+  
+  .logo {
+    width: 230px;
+  }
+  /* Image Slider Styles */
+.image-slider {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.slider-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.slider-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+  pointer-events: none;
+}
+
+.slider-image.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Slider Navigation Buttons */
+.slider-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s ease;
+  z-index: 10;
+  padding: 0;
+  line-height: 1;
+}
+
+.slider-btn:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.slider-btn.prev {
+  left: 8px;
+}
+
+.slider-btn.next {
+  right: 8px;
+}
+
+/* Slider Dots */
+.slider-dots {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  z-index: 10;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.3s ease;
+}
+
+.dot:hover {
+  background: rgba(255, 255, 255, 0.8);
+  transform: scale(1.2);
+}
+
+.dot.active {
+  background: white;
+  transform: scale(1.2);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .slider-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 18px;
+  }
+  
+  .slider-btn.prev {
+    left: 6px;
+  }
+  
+  .slider-btn.next {
+    right: 6px;
+  }
+  
+  .slider-dots {
+    bottom: 10px;
+  }
+  
+  .dot {
+    width: 7px;
+    height: 7px;
+  }
+}
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <a href="/" class="back-icon" aria-label="Back to home">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <path d="M15 18l-6-6 6-6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </a>
+
+  <div class="header">
+    <img class="logo" src="/assets/logo.png" alt="Lumanti - Heritage Hospitality logo"/>
+    <h1>Reserve your Room with Us.</h1>
+    <p></p>
+  </div>
+
+  <div class="form-card">
+    <div class="success-message" id="successMessage">
+      ✓ Reservation submitted successfully. We'll contact you shortly.
+    </div>
+
+    <form id="reservationForm" action="https://docs.google.com/forms/u/0/d/e/1FAIpQLSfOyj-h1kA3iiwrE1Bjq7oQTg3fBLTQEGoui4Ce10kBJmCHVQ/formResponse" method="POST" target="hidden_iframe">
+      <iframe name="hidden_iframe" style="display:none;"></iframe>
+
+      <div class="form-group">
+        <label>Full Name *</label>
+        <input
+          type="text"
+          id="nameInput"
+          name="entry.1842100595"
+          placeholder="Enter your name"
+          required
+        />
+        <div class="error-message" id="nameError">Name must be at least 5 letters</div>
+      </div>
+
+      <div class="form-group">
+        <label>Phone Number *</label>
+        <input
+          type="tel"
+          id="phoneInput"
+          name="entry.975055830"
+          placeholder="98XXXXXXXX"
+          required
+          pattern="[6-9][0-9]{9}"
+        />
+        <div class="error-message" id="phoneError">Enter a valid 10-digit phone number</div>
+      </div>
+
+      <div class="form-group">
+        <label>Check-in Date *</label>
+        <input type="date" required id="dateInput">
+        <input type="hidden" name="entry.1430989006_year" id="dateYear">
+        <input type="hidden" name="entry.1430989006_month" id="dateMonth">
+        <input type="hidden" name="entry.1430989006_day" id="dateDay">
+      </div>
+
+      <div class="form-group">
+        <label>Arrival Time *</label>
+        <input type="time" name="entry.1716276686" id="timeInput" required>
+      </div>
+
+      <div class="form-group">
+        <label>Stay Type *</label>
+        <div class="stay-options">
+          <label class="stay-option">
+            <input type="radio" name="entry.1521729051" value="Daycation" id="daycation" required>
+            <div class="stay-card">
+              <div class="stay-icon">☀️</div>
+              <h4>Daycation</h4>
+              <p>12 Noon - 5 PM</p>
+            </div>
+          </label>
+          <label class="stay-option">
+            <input type="radio" name="entry.1521729051" value="Staycation" id="staycation">
+            <div class="stay-card">
+              <div class="stay-icon">🌙</div>
+              <h4>Staycation</h4>
+              <p>5 PM - 11 AM Next Day</p>
+            </div>
+          </label>
+          <label class="stay-option">
+            <input type="radio" name="entry.1521729051" value="Full Stay" id="fullstay">
+            <div class="stay-card">
+              <div class="stay-icon">🌓</div>
+              <h4>Full Stay</h4>
+              <p>12 Noon - 11 AM</p>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Room Selection *</label>
+        <div class="room-selection">
+          <label class="room-option">
+            <input type="radio" name="entry.278765268" value="Mini" required>
+            <div class="room-card">
+              <div class="room-image">
+                <img src="/assets/mini.png" alt="Mini">
+                <div class="price-badge" id="price1">Rs 499<span class="per-person">per person</span></div>
+              </div>
+              <div class="room-info">
+                <h3>Mini</h3>
+                <p>A small, cozy room with a fan and attached bathroom</p>
+              </div>
+            </div>
+          </label>
+
+          <label class="room-option">
+            <input type="radio" name="entry.278765268" value="Deluxe">
+            <div class="room-card">
+              <div class="room-image">
+                <img src="/assets/deluxe.png" alt="Deluxe">
+                <div class="price-badge" id="price2">Rs 549<span class="per-person">per person</span></div>
+              </div>
+              <div class="room-info">
+                <h3>Deluxe</h3>
+                <p>A medium-sized fan-cooled room with poetic charm</p>
+              </div>
+            </div>
+          </label>
+
+          <label class="room-option">
+            <input type="radio" name="entry.278765268" value="Classic">
+            <div class="room-card">
+              <div class="room-image">
+                <img src="/assets/classic.png" alt="Classic">
+                <div class="price-badge" id="price3">Rs 599<span class="per-person">per person</span></div>
+              </div>
+              <div class="room-info">
+                <h3>Classic</h3>
+                <p>A spacious fan-cooled room with street and temple views</p>
+              </div>
+            </div>
+          </label>
+
+          <label class="room-option">
+            <input type="radio" name="entry.278765268" value="Suite">
+            <div class="room-card">
+              <div class="room-image">
+                <img src="/assets/suite.png" alt="Suite">
+                <div class="price-badge" id="price4">Rs 749<span class="per-person">per person</span></div>
+              </div>
+              <div class="room-info">
+                <h3>Suite</h3>
+                <p>Air-conditioned comfort with a small private balcony</p>
+              </div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <button type="button" class="submit-btn" onclick="showModal()">
+        Review Booking <span class="arrow-right"></span>
+      </button>
+    </form>
+  </div>
+</div>
+
+<div class="modal" id="confirmModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Confirm Reservation</h3>
+    </div>
+    <div class="modal-body">
+      <div class="booking-details">
+        <div class="detail-row">
+          <span class="detail-label">Name</span>
+          <span class="detail-value" id="confirmName">-</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Phone</span>
+          <span class="detail-value" id="confirmPhone">-</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Check-in</span>
+          <span class="detail-value" id="confirmDate">-</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Time</span>
+          <span class="detail-value" id="confirmTime">-</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Stay Type</span>
+          <span class="detail-value" id="confirmStay">-</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Room</span>
+          <span class="detail-value" id="confirmRoom">-</span>
+        </div>
+        <div class="detail-row total-row">
+          <span class="detail-label">Total (2 People)</span>
+          <span class="detail-value" id="confirmAmount">-</span>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal()">Edit</button>
+        <button class="btn btn-primary" onclick="submitForm()">Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const form = document.getElementById('reservationForm');
+const modal = document.getElementById('confirmModal');
+const successMsg = document.getElementById('successMessage');
+const nameInput = document.getElementById('nameInput');
+const phoneInput = document.getElementById('phoneInput');
+const dateInput = document.getElementById('dateInput');
+const timeInput = document.getElementById('timeInput');
+const nameError = document.getElementById('nameError');
+const phoneError = document.getElementById('phoneError');
+
+const prices = {
+  'Mini': { daycation: 499, staycation: 699, fullstay: 1199 },
+  'Deluxe': { daycation: 549, staycation: 799, fullstay: 1349 },
+  'Classic': { daycation: 599, staycation: 899, fullstay: 1499 },
+  'Suite': { daycation: 749, staycation: 1099, fullstay: 1849 }
+};
+
+// Set minimum date to today
+const today = new Date().toISOString().split('T')[0];
+dateInput.min = today;
+
+// Real-time name validation
+nameInput.addEventListener('input', function() {
+  const value = this.value.trim();
+  const lettersOnly = value.replace(/[^A-Za-z\s]/g, '');
+  
+  if (value !== lettersOnly) {
+    this.value = lettersOnly;
+  }
+  
+  if (lettersOnly.length > 0 && lettersOnly.length < 5) {
+    this.classList.add('error');
+    nameError.classList.add('show');
+  } else {
+    this.classList.remove('error');
+    nameError.classList.remove('show');
+  }
+});
+
+// Real-time phone validation
+phoneInput.addEventListener('input', function() {
+  const value = this.value.replace(/\D/g, '');
+  this.value = value;
+  
+  if (value.length > 0 && value.length < 10) {
+    this.classList.add('error');
+    phoneError.classList.add('show');
+  } else {
+    this.classList.remove('error');
+    phoneError.classList.remove('show');
+  }
+});
+
+function updatePrices() {
+  const stayInput = document.querySelector('input[name="entry.1521729051"]:checked');
+  let stay = 'daycation';
+  
+  if (stayInput) {
+    const value = stayInput.value.toLowerCase().replace(' ', '');
+    stay = value === 'fullstay' ? 'fullstay' : (value === 'staycation' ? 'staycation' : 'daycation');
+  }
+  
+  document.getElementById('price1').innerHTML = `Rs ${prices['Mini'][stay].toLocaleString()}<span class="per-person">per person</span>`;
+  document.getElementById('price2').innerHTML = `Rs ${prices['Deluxe'][stay].toLocaleString()}<span class="per-person">per person</span>`;
+  document.getElementById('price3').innerHTML = `Rs ${prices['Classic'][stay].toLocaleString()}<span class="per-person">per person</span>`;
+  document.getElementById('price4').innerHTML = `Rs ${prices['Suite'][stay].toLocaleString()}<span class="per-person">per person</span>`;
+}
+
+document.querySelectorAll('input[name="entry.1521729051"]').forEach(r => 
+  r.addEventListener('change', updatePrices)
+);
+
+// Set default stay type
+document.getElementById('daycation').checked = true;
+updatePrices();
+
+function validateForm() {
+  const name = nameInput.value.trim().replace(/[^A-Za-z\s]/g, '');
+  const phone = phoneInput.value.replace(/\D/g, '');
+  
+  let isValid = true;
+  
+  if (name.length < 5) {
+    nameInput.classList.add('error');
+    nameError.classList.add('show');
+    isValid = false;
+  }
+  
+  if (phone.length !== 10) {
+    phoneInput.classList.add('error');
+    phoneError.classList.add('show');
+    isValid = false;
+  }
+  
+  return isValid;
+}
+
+function showModal() {
+  if (!validateForm() || !form.checkValidity()) {
+    form.reportValidity();
+    return;
+  }
+
+  const name = nameInput.value;
+  const phone = phoneInput.value;
+  const date = dateInput.value;
+  const time = timeInput.value;
+  const stay = document.querySelector('input[name="entry.1521729051"]:checked')?.value || '-';
+  const room = document.querySelector('input[name="entry.278765268"]:checked')?.value || '-';
+
+  // Split date for Google Forms
+  if (date) {
+    const dateObj = new Date(date + 'T00:00:00');
+    document.getElementById('dateYear').value = dateObj.getFullYear();
+    document.getElementById('dateMonth').value = dateObj.getMonth() + 1;
+    document.getElementById('dateDay').value = dateObj.getDate();
+  }
+
+  const stayType = stay.toLowerCase().replace(' ', '');
+  const stayKey = stayType === 'fullstay' ? 'fullstay' : (stayType === 'staycation' ? 'staycation' : 'daycation');
+  const perPersonPrice = room !== '-' && prices[room] ? prices[room][stayKey] : 0;
+  const totalPrice = perPersonPrice * 2;
+  const amount = totalPrice > 0 ? `Rs ${totalPrice.toLocaleString()}` : '-';
+
+  const formattedDate = date ? new Date(date + 'T00:00:00').toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric'
+  }) : '-';
+
+  const formattedTime = time ? new Date('2000-01-01T' + time).toLocaleTimeString('en-US', {
+    hour: 'numeric', minute: '2-digit', hour12: true
+  }) : '-';
+
+  document.getElementById('confirmName').textContent = name;
+  document.getElementById('confirmPhone').textContent = phone;
+  document.getElementById('confirmDate').textContent = formattedDate;
+  document.getElementById('confirmTime').textContent = formattedTime;
+  document.getElementById('confirmStay').textContent = stay;
+  document.getElementById('confirmRoom').textContent = room;
+  document.getElementById('confirmAmount').textContent = amount;
+
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  modal.classList.remove('active');
+  document.body.style.overflow = 'auto';
+}
+
+function submitForm() {
+  closeModal();
+  form.submit();
+  
+  // Redirect to confirmation page after form submission
+  setTimeout(() => {
+    window.location.href = 'thankyou.html';
+  }, 500);
+}
+
+modal.addEventListener('click', e => {
+  if (e.target === modal) closeModal();
+});
+
+window.showModal = showModal;
+window.closeModal = closeModal;
+window.submitForm = submitForm;
+</script>
+</body>
+</html>
