@@ -1,1552 +1,967 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hotel Lumanti - Automated Booking</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-:root {
-  --primary: #c9a961;
-  --primary-dark: #a88b4d;
-  --bg-dark: #1a1a1a;
-  --bg-card: #2a2a2a;
-  --text-light: #f5f5f5;
-  --text-muted: #b0b0b0;
-  --border: #3a3a3a;
-}
-
-body {
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
-  min-height: 100vh;
-  color: var(--text-light);
-  padding: 20px;
-  line-height: 1.6;
-}
-
-.container {
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 0 15px;
-}
-
-.header {
-  text-align: center;
-  padding: 30px 0 40px;
-}
-
-.header h1 {
-  font-size: 28px;
-  font-weight: 300;
-  letter-spacing: 3px;
-  color: var(--primary);
-  margin-bottom: 8px;
-  text-transform: uppercase;
-}
-
-.header p {
-  font-size: 14px;
-  color: var(--text-muted);
-  font-weight: 300;
-  letter-spacing: 1px;
-}
-
-.form-card {
-  background: var(--bg-card);
-  border-radius: 8px;
-  padding: 30px 25px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-  border: 1px solid var(--border);
-}
-
-.success-message {
-  display: none;
-  background: linear-gradient(135deg, #2d4a2b 0%, #3d5a3b 100%);
-  color: #e8f5e9;
-  padding: 16px;
-  border-radius: 8px;
-  margin-bottom: 25px;
-  text-align: center;
-  font-size: 14px;
-  border: 1px solid #4a6741;
-}
-
-.success-message.show {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
-
-.error-alert {
-  display: none;
-  background: linear-gradient(135deg, #4a2d2b 0%, #5a3d3b 100%);
-  color: #ffe8e8;
-  padding: 16px;
-  border-radius: 8px;
-  margin-bottom: 25px;
-  text-align: center;
-  font-size: 14px;
-  border: 1px solid #674741;
-}
-
-.error-alert.show {
-  display: block;
-}
-
-.form-group {
-  margin-bottom: 24px;
-}
-
-label {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 13px;
-  color: var(--text-muted);
-  font-weight: 400;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-
-input, select {
-  width: 100%;
-  padding: 12px 14px;
-  background: var(--bg-dark);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  color: var(--text-light);
-  font-size: 15px;
-  transition: all 0.3s;
-  font-family: inherit;
-}
-
-input:focus, select:focus {
-  outline: none;
-  border-color: var(--primary);
-  background: #0f0f0f;
-}
-
-input.error {
-  border-color: #d32f2f;
-}
-
-.error-message {
-  color: #ff5252;
-  font-size: 12px;
-  margin-top: 6px;
-  display: none;
-}
-
-.error-message.show {
-  display: block;
-}
-
-.stay-options {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 12px;
-}
-
-.stay-option {
-  cursor: pointer;
-}
-
-.stay-card {
-  background: var(--bg-dark);
-  border: 2px solid var(--border);
-  border-radius: 6px;
-  padding: 18px;
-  text-align: center;
-  transition: all 0.3s;
-  height: 100%;
-}
-
-.stay-option:hover .stay-card {
-  border-color: var(--primary);
-  background: #0f0f0f;
-}
-
-.stay-option.active .stay-card {
-  border-color: var(--primary);
-  background: linear-gradient(135deg, rgba(201, 169, 97, 0.1) 0%, rgba(201, 169, 97, 0.05) 100%);
-  box-shadow: 0 0 0 1px var(--primary);
-}
-
-.stay-icon {
-  font-size: 32px;
-  margin-bottom: 8px;
-}
-
-.stay-card h4 {
-  font-size: 16px;
-  color: var(--primary);
-  margin-bottom: 4px;
-  font-weight: 400;
-}
-
-.stay-card p {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.room-selection {
-  display: grid;
-  gap: 14px;
-}
-
-.room-option {
-  cursor: pointer;
-  position: relative;
-}
-
-.room-card {
-  background: var(--bg-dark);
-  border: 2px solid var(--border);
-  border-radius: 6px;
-  overflow: hidden;
-  transition: all 0.3s;
-  position: relative;
-}
-
-.room-option:hover .room-card {
-  border-color: var(--primary);
-  transform: translateY(-2px);
-}
-
-.room-option.active .room-card {
-  border-color: var(--primary);
-  border-width: 3px;
-  box-shadow: 0 0 0 3px rgba(201, 169, 97, 0.2);
-  background: linear-gradient(135deg, rgba(201, 169, 97, 0.08) 0%, rgba(201, 169, 97, 0.03) 100%);
-}
-
-.room-option.active .room-card::before {
-  content: '✓';
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  width: 32px;
-  height: 32px;
-  background: var(--primary);
-  color: var(--bg-dark);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  font-weight: bold;
-  z-index: 10;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-.room-option.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.room-option.disabled:hover .room-card {
-  transform: none;
-  border-color: var(--border);
-}
-
-.room-info {
-  padding: 16px;
-}
-
-.room-info h3 {
-  font-size: 17px;
-  color: var(--primary);
-  margin-bottom: 4px;
-  font-weight: 400;
-}
-
-.room-info p {
-  font-size: 13px;
-  color: var(--text-muted);
-}
-
-.room-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 12px;
-}
-
-.price-badge {
-  background: var(--primary);
-  color: var(--bg-dark);
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.availability-badge {
-  font-size: 12px;
-  padding: 4px 10px;
-  border-radius: 12px;
-}
-
-.available {
-  background: rgba(76, 175, 80, 0.2);
-  color: #4caf50;
-}
-
-.unavailable {
-  background: rgba(244, 67, 54, 0.2);
-  color: #f44336;
-}
-
-.submit-btn {
-  width: 100%;
-  padding: 14px;
-  background: var(--primary);
-  color: var(--bg-dark);
-  border: none;
-  border-radius: 4px;
-  font-size: 15px;
-  font-weight: 500;
-  cursor: pointer;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  transition: all 0.3s;
-  margin-top: 10px;
-}
-
-.submit-btn:hover:not(:disabled) {
-  background: var(--primary-dark);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(201, 169, 97, 0.3);
-}
-
-.submit-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.modal {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.85);
-  z-index: 1000;
-  padding: 20px;
-  overflow-y: auto;
-}
-
-.modal.active {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: fadeIn 0.3s;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.modal-content {
-  background: var(--bg-card);
-  border-radius: 8px;
-  max-width: 500px;
-  width: 100%;
-  border: 1px solid var(--border);
-  animation: slideUp 0.3s;
-}
-
-@keyframes slideUp {
-  from {
-    transform: translateY(30px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-.modal-header {
-  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
-  padding: 20px 25px;
-  border-radius: 8px 8px 0 0;
-}
-
-.modal-header h3 {
-  font-size: 20px;
-  font-weight: 400;
-  letter-spacing: 1px;
-  color: var(--bg-dark);
-}
-
-.modal-body {
-  padding: 25px;
-}
-
-.booking-details {
-  background: var(--bg-dark);
-  border-radius: 6px;
-  padding: 20px;
-  margin-bottom: 20px;
-  border: 1px solid var(--border);
-}
-
-.detail-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.detail-row:last-child {
-  border-bottom: none;
-}
-
-.detail-label {
-  font-size: 13px;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.detail-value {
-  font-size: 14px;
-  color: var(--text-light);
-  font-weight: 500;
-  text-align: right;
-}
-
-.total-row {
-  border-top: 2px solid var(--primary);
-  padding-top: 15px;
-  margin-top: 10px;
-}
-
-.total-row .detail-label {
-  color: var(--primary);
-  font-size: 14px;
-}
-
-.total-row .detail-value {
-  color: var(--primary);
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.modal-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.btn {
-  padding: 12px;
-  border: none;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  transition: all 0.3s;
-}
-
-.btn-secondary {
-  background: var(--bg-dark);
-  color: var(--text-light);
-  border: 1px solid var(--border);
-}
-
-.btn-secondary:hover {
-  background: #0f0f0f;
-  border-color: var(--primary);
-}
-
-.btn-primary {
-  background: var(--primary);
-  color: var(--bg-dark);
-}
-
-.btn-primary:hover {
-  background: var(--primary-dark);
-}
-
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* QR Code Modal */
-.qr-ticket {
-  background: white;
-  padding: 30px;
-  border-radius: 12px;
-  text-align: center;
-  max-width: 400px;
-}
-
-.qr-ticket h2 {
-  color: #1a1a1a;
-  font-size: 24px;
-  margin-bottom: 10px;
-}
-
-.qr-ticket .booking-id {
-  color: #666;
-  font-size: 14px;
-  margin-bottom: 20px;
-}
-
-.qr-ticket #qrcodeContainer {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  display: inline-block;
-  margin: 20px 0;
-}
-
-.qr-ticket .ticket-details {
-  text-align: left;
-  background: #f5f5f5;
-  padding: 20px;
-  border-radius: 8px;
-  margin: 20px 0;
-}
-
-.qr-ticket .ticket-details .ticket-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 0;
-  border-bottom: 1px solid #ddd;
-  color: #333;
-}
-
-.qr-ticket .ticket-details .ticket-row:last-child {
-  border-bottom: none;
-}
-
-.qr-ticket .ticket-label {
-  font-size: 12px;
-  color: #666;
-  font-weight: 600;
-}
-
-.qr-ticket .ticket-value {
-  font-size: 13px;
-  color: #1a1a1a;
-  font-weight: 500;
-}
-
-.qr-ticket .instructions {
-  color: #666;
-  font-size: 13px;
-  margin-top: 20px;
-  padding: 15px;
-  background: #fff3cd;
-  border-radius: 8px;
-  border: 1px solid #ffc107;
-}
-
-.qr-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 20px;
-}
-
-/* Scanner Mode */
-.scanner-container {
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.scanner-header {
-  text-align: center;
-  padding: 20px 0 30px;
-}
-
-.scanner-card {
-  background: var(--bg-card);
-  border-radius: 8px;
-  padding: 30px;
-  border: 1px solid var(--border);
-}
-
-#scannerInput {
-  font-size: 18px;
-  padding: 16px;
-  text-align: center;
-  letter-spacing: 2px;
-  font-family: 'Courier New', monospace;
-}
-
-.guest-details {
-  display: none;
-  background: var(--bg-dark);
-  border-radius: 8px;
-  padding: 25px;
-  margin-top: 25px;
-  border: 2px solid var(--primary);
-}
-
-.guest-details.show {
-  display: block;
-}
-
-.guest-header {
-  text-align: center;
-  padding-bottom: 20px;
-  border-bottom: 2px solid var(--border);
-  margin-bottom: 20px;
-}
-
-.guest-header h2 {
-  color: var(--primary);
-  font-size: 24px;
-  margin-bottom: 5px;
-}
-
-.status-badge {
-  display: inline-block;
-  padding: 6px 16px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.status-pending {
-  background: rgba(255, 193, 7, 0.2);
-  color: #ffc107;
-}
-
-.status-checked-in {
-  background: rgba(76, 175, 80, 0.2);
-  color: #4caf50;
-}
-
-.checkin-btn {
-  width: 100%;
-  padding: 16px;
-  background: var(--primary);
-  color: var(--bg-dark);
-  border: none;
-  border-radius: 4px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  text-transform: uppercase;
-  margin-top: 20px;
-  transition: all 0.3s;
-}
-
-.checkin-btn:hover:not(:disabled) {
-  background: var(--primary-dark);
-  transform: scale(1.02);
-}
-
-.checkin-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.loader {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border: 2px solid var(--border);
-  border-top-color: var(--primary);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.setup-info {
-  max-width: 600px;
-  margin: 30px auto;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 25px;
-}
-
-.setup-info h2 {
-  color: var(--primary);
-  margin-bottom: 20px;
-  font-size: 20px;
-}
-
-.setup-info h3 {
-  color: var(--primary);
-  font-size: 16px;
-  margin: 20px 0 10px;
-}
-
-.setup-info pre {
-  background: var(--bg-dark);
-  padding: 15px;
-  border-radius: 4px;
-  border: 1px solid var(--border);
-  overflow-x: auto;
-  font-size: 12px;
-  margin: 10px 0;
-}
-
-.setup-info ul {
-  margin-left: 20px;
-  color: var(--text-muted);
-}
-
-.setup-info li {
-  margin: 5px 0;
-}
-
-@media (max-width: 600px) {
-  .stay-options {
-    grid-template-columns: 1fr;
-  }
-  
-  .qr-actions {
-    grid-template-columns: 1fr;
-  }
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Hotel Lumanti - Heritage & Modernity</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- Library for QR Scanning -->
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #c9a961;
+      --primary-dark: #a88b4d;
+      --bg-black: #0a0a0a;
+      --bg-card: #1a1a1a;
+      --text-light: #f5f5f5;
+      --text-muted: #b0b0b0;
+      --border: #333;
+      --success: #4caf50;
+      --error: #ef4444;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-black);
+      color: var(--text-light);
+      line-height: 1.6;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .app-container {
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .nav-switcher {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+    }
+
+    .nav-btn {
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-weight: 600;
+      padding: 5px 0;
+      border-bottom: 2px solid transparent;
+      transition: var(--transition);
+    }
+
+    .nav-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    header {
+      text-align: center;
+      padding: 20px 0 30px;
+    }
+
+    header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 32px;
+      color: var(--primary);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    header p {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      color: var(--text-muted);
+      margin-top: 5px;
+    }
+
+    /* Stepper UI */
+    .stepper {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .step-node {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--border);
+      transition: var(--transition);
+    }
+
+    .step-node.active {
+      background: var(--primary);
+      transform: scale(1.4);
+      box-shadow: 0 0 12px var(--primary);
+    }
+
+    /* Views */
+    .view {
+      display: none;
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      margin-bottom: 20px;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h2::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-light);
+      font-size: 15px;
+      outline: none;
+      transition: var(--transition);
+    }
+
+    input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 1px var(--primary);
+    }
+
+    /* Stay Grid */
+    .stay-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+
+    .stay-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 12px;
+      border-radius: 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .stay-item.active {
+      border-color: var(--primary);
+      background: rgba(201, 169, 97, 0.1);
+    }
+
+    .stay-item h4 { font-size: 12px; color: var(--primary); margin-bottom: 4px; }
+    .stay-item p { font-size: 10px; color: var(--text-muted); }
+
+    /* Room Cards */
+    .room-list {
+      display: grid;
+      gap: 15px;
+    }
+
+    .room-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+    }
+
+    .room-card.disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      filter: grayscale(1);
+    }
+
+    .room-card.active {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px var(--primary);
+    }
+
+    .room-img {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+    }
+
+    .room-info { padding: 15px; }
+    .room-info h3 { font-size: 17px; color: var(--primary); }
+    .room-info p { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+    .price-tag {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: var(--primary);
+      color: #000;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-weight: 800;
+      font-size: 11px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+
+    .avail-status {
+      font-size: 10px;
+      font-weight: 700;
+      margin-top: 5px;
+    }
+
+    .avail-true { color: var(--success); }
+    .avail-false { color: var(--error); }
+
+    /* Buttons */
+    .btn {
+      width: 100%;
+      padding: 16px;
+      border-radius: 8px;
+      border: none;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 14px;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .btn-gold { background: var(--primary); color: #000; }
+    .btn-gold:hover:not(:disabled) { background: var(--primary-dark); }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-light); margin-top: 12px; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Summary Card */
+    .summary-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .summary-total {
+      border-top: 1px solid var(--border);
+      margin-top: 10px;
+      padding-top: 10px;
+      font-weight: 700;
+      color: var(--primary);
+      font-size: 16px;
+    }
+
+    /* Ticket */
+    .ticket-container {
+      background: #fff;
+      color: #000;
+      border-radius: 15px;
+      overflow: hidden;
+      margin-top: 10px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    }
+
+    .ticket-head {
+      background: #000;
+      color: var(--primary);
+      padding: 20px;
+      text-align: center;
+    }
+
+    .ticket-body {
+      padding: 25px;
+      text-align: center;
+    }
+
+    #qrcode-display {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .ticket-grid {
+      text-align: left;
+      border-top: 1px dashed #ddd;
+      padding-top: 15px;
+    }
+
+    .ticket-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      margin-bottom: 5px;
+    }
+
+    .ticket-label { color: #888; }
+    .ticket-val { font-weight: 700; }
+
+    /* Reception Mode */
+    .reception-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 15px;
+      padding: 25px;
+    }
+
+    #reception-scan-input {
+      text-align: center;
+      font-size: 20px;
+      letter-spacing: 5px;
+      font-family: monospace;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+
+    #reader {
+      width: 100%;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 15px;
+      border: 1px solid var(--border);
+      background: #000;
+    }
+
+    .guest-info-pane {
+      margin-top: 20px;
+      display: none;
+      animation: fadeIn 0.3s;
+    }
+
+    .status-pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      background: #333;
+    }
+
+    .status-confirmed { color: var(--success); background: rgba(76, 175, 80, 0.1); }
+    .status-checked-in { color: var(--primary); background: rgba(201, 169, 97, 0.1); }
+
+    .loader {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s infinite linear;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-toast {
+      background: var(--error);
+      color: #fff;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 12px;
+      margin-top: 10px;
+      display: none;
+    }
+
+    #btn-start-scanner {
+      margin-bottom: 15px;
+    }
+  </style>
 </head>
 <body>
 
-<!-- Booking Form (default mode) -->
-<div id="bookingMode" class="container">
-  <div class="header">
-    <h1>Hotel Lumanti</h1>
-    <p>Automated Booking System</p>
+<div class="app-container">
+  <div class="nav-switcher">
+    <div class="nav-btn active" id="btn-mode-booking">Guest Booking</div>
+    <div class="nav-btn" id="btn-mode-reception">Reception Terminal</div>
   </div>
 
-  <div class="form-card">
-    <div class="success-message" id="successMessage">✓ Reservation submitted successfully!</div>
-    <div class="error-alert" id="errorAlert"></div>
+  <header>
+    <h1>Lumanti</h1>
+    <p>Heritage Hospitality</p>
+  </header>
 
-    <div class="form-group">
-      <label>Full Name *</label>
-      <input type="text" id="nameInput" placeholder="Enter your name" />
-      <div class="error-message" id="nameError">Name must be at least 5 letters</div>
+  <!-- GUEST BOOKING FLOW -->
+  <div id="booking-section">
+    <div class="stepper">
+      <div class="step-node active" data-step="1"></div>
+      <div class="step-node" data-step="2"></div>
+      <div class="step-node" data-step="3"></div>
+      <div class="step-node" data-step="4"></div>
     </div>
 
-    <div class="form-group">
-      <label>Phone Number *</label>
-      <input type="tel" id="phoneInput" placeholder="98XXXXXXXX" maxlength="10" />
-      <div class="error-message" id="phoneError">Enter a valid 10-digit phone number</div>
-    </div>
-
-    <div class="form-group">
-      <label>Check-in Date *</label>
-      <input type="date" id="dateInput">
-    </div>
-
-    <div class="form-group">
-      <label>Arrival Time *</label>
-      <input type="time" id="timeInput">
-    </div>
-
-    <div class="form-group">
-      <label>Stay Type *</label>
-      <div class="stay-options">
-        <div class="stay-option active" data-stay="Daycation">
-          <div class="stay-card">
-            <div class="stay-icon">☀️</div>
+    <!-- Step 1: When & What Type -->
+    <div class="view active" id="view-step-1">
+      <h2>1. Stay Details</h2>
+      <div class="form-group">
+        <label>Category</label>
+        <div class="stay-grid">
+          <div class="stay-item active" data-stay="Daycation" data-start="11:00" data-end="17:00">
             <h4>Daycation</h4>
-            <p>12 Noon - 5 PM</p>
+            <p>11AM - 5PM</p>
           </div>
-        </div>
-        <div class="stay-option" data-stay="Staycation">
-          <div class="stay-card">
-            <div class="stay-icon">🌙</div>
+          <div class="stay-item" data-stay="Staycation" data-start="19:00" data-end="23:59">
             <h4>Staycation</h4>
-            <p>5 PM - 11 AM Next Day</p>
+            <p>7PM Onwards</p>
           </div>
-        </div>
-        <div class="stay-option" data-stay="Full Stay">
-          <div class="stay-card">
-            <div class="stay-icon">🌓</div>
+          <div class="stay-item" data-stay="Full Stay" data-start="11:00" data-end="23:59">
             <h4>Full Stay</h4>
-            <p>12 Noon - 11 AM</p>
+            <p>24h Stay</p>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="form-group">
-      <label>
-        Room Selection * 
-        <span id="availabilityLoader" style="display: none;" class="loader"></span>
-      </label>
-      <div class="room-selection" id="roomSelection"></div>
-    </div>
-
-    <button class="submit-btn" id="submitBtn">Review Booking →</button>
-  </div>
-</div>
-
-<!-- Scanner Mode (reception) -->
-<div id="scannerMode" class="scanner-container" style="display: none;">
-  <div class="scanner-header">
-    <h1 style="font-size: 32px; letter-spacing: 3px;">RECEPTION</h1>
-    <p style="margin-top: 10px;">Scan QR Code to Check-in Guest</p>
-  </div>
-
-  <div class="scanner-card">
-    <div class="form-group">
-      <label>Enter QR Token or Scan Code</label>
-      <input type="text" id="scannerInput" placeholder="Paste or scan token here..." autofocus />
-    </div>
-
-    <div class="guest-details" id="guestDetails">
-      <div class="guest-header">
-        <h2 id="guestName">-</h2>
-        <span class="status-badge" id="guestStatus">Pending</span>
+      <div class="form-group">
+        <label>Reservation Date</label>
+        <input type="date" id="input-date">
       </div>
 
-      <div class="booking-details">
-        <div class="detail-row">
-          <span class="detail-label">Booking ID</span>
-          <span class="detail-value" id="guestBookingId">-</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Phone</span>
-          <span class="detail-value" id="guestPhone">-</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Check-in Date</span>
-          <span class="detail-value" id="guestDate">-</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Arrival Time</span>
-          <span class="detail-value" id="guestTime">-</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Stay Type</span>
-          <span class="detail-value" id="guestStayType">-</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Room</span>
-          <span class="detail-value" id="guestRoom">-</span>
-        </div>
-        <div class="detail-row total-row">
-          <span class="detail-label">Total Amount</span>
-          <span class="detail-value" id="guestAmount">-</span>
-        </div>
-        <div class="detail-row" id="checkinInfo" style="display: none;">
-          <span class="detail-label">Checked In</span>
-          <span class="detail-value" id="guestCheckinTime">-</span>
-        </div>
+      <div class="form-group">
+        <label>Expected Arrival Time</label>
+        <input type="time" id="input-time">
+        <div class="error-toast" id="time-error">Arrival time must be within stay window.</div>
       </div>
 
-      <button class="checkin-btn" id="checkinBtn">
-        <span id="checkinBtnText">Check In Guest</span>
-        <span id="checkinBtnLoader" style="display: none;" class="loader"></span>
+      <button class="btn btn-gold" id="btn-to-step-2">
+        <span id="txt-check-avail">Check Availability</span>
+        <div class="loader" id="loader-check-avail" style="display:none;"></div>
       </button>
     </div>
-  </div>
-</div>
 
-<!-- Confirmation Modal -->
-<div class="modal" id="confirmModal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h3>Confirm Reservation</h3>
+    <!-- Step 2: Room Selection -->
+    <div class="view" id="view-step-2">
+      <h2>2. Select Your Room</h2>
+      <div class="room-list" id="room-list-container">
+        <!-- Rendered via JS -->
+      </div>
+      <button class="btn btn-outline" onclick="changeStep(1)">Back</button>
+      <button class="btn btn-gold" id="btn-to-step-3" disabled style="margin-top:15px;">Continue to Details</button>
     </div>
-    <div class="modal-body">
-      <div class="booking-details">
-        <div class="detail-row">
-          <span class="detail-label">Name</span>
-          <span class="detail-value" id="confirmName">-</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Phone</span>
-          <span class="detail-value" id="confirmPhone">-</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Check-in</span>
-          <span class="detail-value" id="confirmDate">-</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Time</span>
-          <span class="detail-value" id="confirmTime">-</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Stay Type</span>
-          <span class="detail-value" id="confirmStay">-</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Room</span>
-          <span class="detail-value" id="confirmRoom">-</span>
-        </div>
-        <div class="detail-row total-row">
-          <span class="detail-label">Total (2 People)</span>
-          <span class="detail-value" id="confirmAmount">-</span>
+
+    <!-- Step 3: Guest Details -->
+    <div class="view" id="view-step-3">
+      <h2>3. Guest Details</h2>
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="input-name" placeholder="As per Identity Document">
+      </div>
+      <div class="form-group">
+        <label>Phone Number</label>
+        <input type="tel" id="input-phone" placeholder="98XXXXXXXX">
+      </div>
+
+      <div class="summary-card">
+        <label>Booking Summary</label>
+        <div class="summary-row"><span>Stay:</span> <span id="summ-stay">-</span></div>
+        <div class="summary-row"><span>Date:</span> <span id="summ-date">-</span></div>
+        <div class="summary-row"><span>Room:</span> <span id="summ-room">-</span></div>
+        <div class="summary-row"><span>Rate:</span> <span id="summ-rate">-</span></div>
+        <div class="summary-total summary-row">
+          <span>Total (2 Persons Minimum):</span>
+          <span id="summ-total">-</span>
         </div>
       </div>
 
-      <div class="modal-actions">
-        <button class="btn btn-secondary" id="editBtn">Edit</button>
-        <button class="btn btn-primary" id="confirmBtn">
-          <span id="confirmBtnText">Confirm</span>
-          <span id="confirmBtnLoader" style="display: none;" class="loader"></span>
-        </button>
+      <button class="btn btn-outline" onclick="changeStep(2)">Back</button>
+      <button class="btn btn-gold" id="btn-confirm-booking" style="margin-top:15px;">Confirm & Book Now</button>
+    </div>
+
+    <!-- Step 4: Success Ticket -->
+    <div class="view" id="view-step-4">
+      <div style="text-align:center; margin-bottom: 20px;">
+        <h2 style="border:none; padding:0; display:inline-block;">Success!</h2>
+        <p style="color:var(--success); font-weight:600; font-size: 13px;">Your reservation is confirmed.</p>
       </div>
+
+      <div id="capture-ticket" class="ticket-container">
+        <div class="ticket-head">LUMANTI HERITAGE</div>
+        <div class="ticket-body">
+          <div id="qrcode-display"></div>
+          <div class="ticket-grid" id="ticket-data-grid">
+            <!-- Rendered via JS -->
+          </div>
+          <p style="font-size:10px; color:#999; margin-top:20px; font-weight:700;">#<span id="ticket-ref-id"></span></p>
+        </div>
+      </div>
+
+      <button class="btn btn-gold" id="btn-download-ticket" style="margin-top: 25px;">Download Digital Ticket</button>
+      <button class="btn btn-outline" onclick="location.reload()">New Reservation</button>
     </div>
   </div>
-</div>
 
-<!-- QR Code Modal -->
-<div class="modal" id="qrModal">
-  <div class="modal-content">
-    <div class="modal-body">
-      <div class="qr-ticket" id="qrTicket">
-        <h2>🎫 Booking Confirmed!</h2>
-        <div class="booking-id">Booking #<span id="qrBookingId">-</span></div>
+  <!-- RECEPTION MODE -->
+  <div id="reception-section" style="display:none;">
+    <div class="reception-card">
+      <div class="form-group" style="text-align:center;">
+        <label>Reception Terminal: Scan QR Code</label>
         
-        <div id="qrcodeContainer"></div>
-        
-        <div class="ticket-details">
-          <div class="ticket-row">
-            <span class="ticket-label">Name</span>
-            <span class="ticket-value" id="qrName">-</span>
-          </div>
-          <div class="ticket-row">
-            <span class="ticket-label">Phone</span>
-            <span class="ticket-value" id="qrPhone">-</span>
-          </div>
-          <div class="ticket-row">
-            <span class="ticket-label">Date</span>
-            <span class="ticket-value" id="qrDate">-</span>
-          </div>
-          <div class="ticket-row">
-            <span class="ticket-label">Time</span>
-            <span class="ticket-value" id="qrTime">-</span>
-          </div>
-          <div class="ticket-row">
-            <span class="ticket-label">Stay Type</span>
-            <span class="ticket-value" id="qrStayType">-</span>
-          </div>
-          <div class="ticket-row">
-            <span class="ticket-label">Room</span>
-            <span class="ticket-value" id="qrRoom">-</span>
-          </div>
-          <div class="ticket-row">
-            <span class="ticket-label">Amount</span>
-            <span class="ticket-value" id="qrAmount">-</span>
-          </div>
-        </div>
+        <!-- Scanner Area -->
+        <div id="reader"></div>
+        <button class="btn btn-gold" id="btn-start-scanner">Open Scanner</button>
 
-        <div class="instructions">
-          📱 Save this QR code and show it at reception for quick check-in!
-        </div>
+        <label>Or Enter Token Manually</label>
+        <input type="text" id="reception-scan-input" placeholder="LMT-XXXXXX" autocomplete="off">
+        <div class="error-toast" id="scan-error">Invalid or missing token.</div>
       </div>
 
-      <div class="qr-actions">
-        <button class="btn btn-secondary" id="downloadQRBtn">Download QR</button>
-        <button class="btn btn-primary" id="closeQRBtn">Close</button>
+      <div class="guest-info-pane" id="guest-preview-pane">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 15px;">
+          <div>
+            <h3 id="prev-guest-name" style="color:var(--primary);">-</h3>
+            <p id="prev-guest-ref" style="font-size:11px; color:var(--text-muted);">-</p>
+          </div>
+          <div id="prev-guest-status" class="status-pill">-</div>
+        </div>
+
+        <div style="background:var(--bg-black); padding:15px; border-radius:10px; border:1px solid var(--border); margin-bottom:15px;">
+          <div class="summary-row"><span>Category</span><span id="prev-stay-type">-</span></div>
+          <div class="summary-row"><span>Room</span><span id="prev-room-type">-</span></div>
+          <div class="summary-row"><span>Scheduled</span><span id="prev-checkin-time">-</span></div>
+          <div class="summary-row"><span>Phone</span><span id="prev-phone">-</span></div>
+          <div class="summary-row summary-total"><span>Amount Due</span><span id="prev-amount">-</span></div>
+        </div>
+
+        <button class="btn btn-gold" id="btn-reception-checkin">Confirm Check-In</button>
       </div>
     </div>
   </div>
 </div>
 
 <script>
-// ========================================
-// CONFIGURATION
-// ========================================
-const CONFIG = {
-  SUPABASE_URL: 'https://fzwnglhxtmtltpysdzma.supabase.co',
-  SUPABASE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6d25nbGh4dG10bHRweXNkem1hIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2ODU4MTQzMCwiZXhwIjoyMDg0MTU3NDMwfQ.Ok0ZxnIHJnsvM2D67BiNoe84VnCqaV_Tz61Zl73nuRw',
-};
-
-const ROOM_DATA = {
-  prices: {
-    'Mini': { daycation: 499, staycation: 699, fullstay: 1199 },
-    'Deluxe': { daycation: 549, staycation: 799, fullstay: 1349 },
-    'Classic': { daycation: 599, staycation: 899, fullstay: 1499 },
-    'Suite': { daycation: 749, staycation: 1099, fullstay: 1849 }
-  },
-  descriptions: {
-    'Mini': 'Cozy room with fan & attached bathroom',
-    'Deluxe': 'Medium-sized fan-cooled room',
-    'Classic': 'Spacious with street views',
-    'Suite': 'AC comfort with private balcony'
-  },
-  capacity: { 'Mini': 2, 'Deluxe': 2, 'Classic': 2, 'Suite': 3 }
-};
-
-// ========================================
-// UTILITIES
-// ========================================
-const $ = (id) => document.getElementById(id);
-const $$ = (selector) => document.querySelectorAll(selector);
-
-function safeElement(id, operation) {
-  const el = $(id);
-  if (el && operation) operation(el);
-  return el;
-}
-
-async function fetchSupabase(endpoint, options = {}) {
-  const url = `${CONFIG.SUPABASE_URL}/rest/v1/${endpoint}`;
-  const headers = {
-    'apikey': CONFIG.SUPABASE_KEY,
-    'Authorization': `Bearer ${CONFIG.SUPABASE_KEY}`,
-    'Content-Type': 'application/json',
-    ...options.headers
+  const CONFIG = {
+    URL: 'https://fzwnglhxtmtltpysdzma.supabase.co/rest/v1/bookings',
+    KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6d25nbGh4dG10bHRweXNkem1hIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2ODU4MTQzMCwiZXhwIjoyMDg0MTU3NDMwfQ.Ok0ZxnIHJnsvM2D67BiNoe84VnCqaV_Tz61Zl73nuRw'
   };
 
-  try {
-    const response = await fetch(url, { ...options, headers });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return await response.json();
-  } catch (error) {
-    console.error('Supabase error:', error);
-    throw error;
-  }
-}
+  const ROOMS = [
+    { id: 'mini', name: 'Mini Heritage', cap: 4, basePrice: 499, img: 'https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=500', desc: 'Cozy room with cultural charm.' },
+    { id: 'deluxe', name: 'Deluxe Boutique', cap: 3, basePrice: 549, img: 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=500', desc: 'Modern amenities with poetic fan-cooled breeze.' },
+    { id: 'classic', name: 'Classic Temple View', cap: 2, basePrice: 599, img: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=500', desc: 'Large windows overlooking the heritage temple.' },
+    { id: 'suite', name: 'Royal Suite (AC)', cap: 2, basePrice: 749, img: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=500', desc: 'Premium AC comfort with a private balcony.' }
+  ];
 
-function generateToken() {
-  return 'LMT' + Date.now() + Math.random().toString(36).substr(2, 9).toUpperCase();
-}
-
-function getPriceKey(stayType) {
-  const key = stayType.toLowerCase().replace(' ', '');
-  return key === 'fullstay' ? 'fullstay' : (key === 'staycation' ? 'staycation' : 'daycation');
-}
-
-// ========================================
-// BOOKING FORM
-// ========================================
-function initBookingForm() {
-  const state = {
-    formData: {
-      name: '',
-      phone: '',
-      checkInDate: '',
-      arrivalTime: '',
-      stayType: 'Daycation',
-      roomType: ''
-    },
-    availability: {}
+  let state = {
+    step: 1,
+    mode: 'booking',
+    stayType: 'Daycation',
+    date: new Date().toISOString().split('T')[0],
+    time: '12:00',
+    selectedRoom: null,
+    availabilities: {}
   };
 
-  const elements = {
-    nameInput: $('nameInput'),
-    phoneInput: $('phoneInput'),
-    dateInput: $('dateInput'),
-    timeInput: $('timeInput'),
-    nameError: $('nameError'),
-    phoneError: $('phoneError'),
-    submitBtn: $('submitBtn'),
-    modal: $('confirmModal'),
-    errorAlert: $('errorAlert'),
-    availabilityLoader: $('availabilityLoader')
-  };
+  let html5QrCode = null;
 
-  // Set minimum date to today
-  if (elements.dateInput) {
-    elements.dateInput.min = new Date().toISOString().split('T')[0];
-  }
+  // Setup Defaults
+  document.getElementById('input-date').value = state.date;
+  document.getElementById('input-date').min = state.date;
+  document.getElementById('input-time').value = state.time;
 
-  // Set current time
-  const now = new Date();
-  const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-  if (elements.timeInput) {
-    elements.timeInput.value = currentTime;
-    state.formData.arrivalTime = currentTime;
-  }
+  // Nav Switcher
+  document.getElementById('btn-mode-booking').onclick = () => switchMode('booking');
+  document.getElementById('btn-mode-reception').onclick = () => switchMode('reception');
 
-  // Validation functions
-  const validate = {
-    name: (name) => name.replace(/[^A-Za-z\s]/g, '').length >= 5,
-    phone: (phone) => {
-      const cleaned = phone.replace(/\D/g, '');
-      return cleaned.length === 10 && /^[6-9]/.test(cleaned);
-    }
-  };
-
-  // Name input handler
-  elements.nameInput?.addEventListener('input', function() {
-    const value = this.value.trim();
-    const cleaned = value.replace(/[^A-Za-z\s]/g, '');
-    
-    if (value !== cleaned) this.value = cleaned;
-    state.formData.name = cleaned;
-    
-    if (cleaned.length > 0 && cleaned.length < 5) {
-      this.classList.add('error');
-      elements.nameError?.classList.add('show');
+  function switchMode(mode) {
+    state.mode = mode;
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(`btn-mode-${mode}`).classList.add('active');
+    document.getElementById('booking-section').style.display = mode === 'booking' ? 'block' : 'none';
+    document.getElementById('reception-section').style.display = mode === 'reception' ? 'block' : 'none';
+    if(mode === 'reception') {
+      document.getElementById('reception-scan-input').focus();
     } else {
-      this.classList.remove('error');
-      elements.nameError?.classList.remove('show');
+      stopScanner();
     }
-  });
+  }
 
-  // Phone input handler
-  elements.phoneInput?.addEventListener('input', function() {
-    const value = this.value.replace(/\D/g, '');
-    this.value = value;
-    state.formData.phone = value;
+  // Scanner Logic
+  const startScanner = async () => {
+    html5QrCode = new Html5Qrcode("reader");
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
     
-    if (value.length > 0 && value.length < 10) {
-      this.classList.add('error');
-      elements.phoneError?.classList.add('show');
-    } else {
-      this.classList.remove('error');
-      elements.phoneError?.classList.remove('show');
-    }
-  });
+    document.getElementById('btn-start-scanner').style.display = 'none';
+    document.getElementById('reader').style.display = 'block';
 
-  // Date input handler
-  elements.dateInput?.addEventListener('change', function() {
-    state.formData.checkInDate = this.value;
-    checkAvailability();
-  });
-
-  // Time input handler
-  elements.timeInput?.addEventListener('change', function() {
-    state.formData.arrivalTime = this.value;
-  });
-
-  // Stay type selection
-  $$('.stay-option').forEach(option => {
-    option.addEventListener('click', function() {
-      $$('.stay-option').forEach(o => o.classList.remove('active'));
-      this.classList.add('active');
-      state.formData.stayType = this.dataset.stay;
-      updateRoomPrices();
-      checkAvailability();
-    });
-  });
-
-  // Check availability
-  async function checkAvailability() {
-    if (!state.formData.checkInDate || !state.formData.stayType) return;
-
-    safeElement('availabilityLoader', el => el.style.display = 'inline-block');
-    
     try {
-      const params = new URLSearchParams({
-        check_in_date: `eq.${state.formData.checkInDate}`,
-        stay_type: `eq.${state.formData.stayType}`,
-        select: 'room_type'
-      });
-      
-      const bookings = await fetchSupabase(`bookings?${params}`);
-      
-      Object.keys(ROOM_DATA.capacity).forEach(room => {
-        const bookedCount = bookings.filter(b => b.room_type === room).length;
-        state.availability[room] = ROOM_DATA.capacity[room] - bookedCount;
-      });
-      
-      updateRoomPrices();
-    } catch (error) {
-      showError('Error checking availability. Please try again.');
-    } finally {
-      safeElement('availabilityLoader', el => el.style.display = 'none');
+      await html5QrCode.start(
+        { facingMode: "environment" },
+        config,
+        (decodedText) => {
+          // On Success
+          document.getElementById('reception-scan-input').value = decodedText;
+          lookupBooking(decodedText);
+          stopScanner();
+        },
+        (errorMessage) => {
+          // console.log("Scanning...");
+        }
+      );
+    } catch (err) {
+      alert("Error accessing camera: " + err);
+      document.getElementById('btn-start-scanner').style.display = 'block';
     }
+  };
+
+  const stopScanner = () => {
+    if (html5QrCode && html5QrCode.isScanning) {
+      html5QrCode.stop().then(() => {
+        document.getElementById('reader').style.display = 'none';
+        document.getElementById('btn-start-scanner').style.display = 'block';
+      });
+    }
+  };
+
+  document.getElementById('btn-start-scanner').onclick = startScanner;
+
+  // Lookup Logic
+  const lookupBooking = async (token) => {
+    try {
+      const resp = await fetch(`${CONFIG.URL}?qr_token=eq.${token}`, {
+        headers: { apikey: CONFIG.KEY, Authorization: `Bearer ${CONFIG.KEY}` }
+      });
+      const data = await resp.json();
+      
+      if(data && data.length > 0) {
+        showGuestPreview(data[0]);
+        document.getElementById('scan-error').style.display = 'none';
+      } else {
+        document.getElementById('scan-error').style.display = 'block';
+        document.getElementById('guest-preview-pane').style.display = 'none';
+      }
+    } catch(e) { console.error(e); }
+  };
+
+  // Step 1: Category Logic
+  document.querySelectorAll('.stay-item').forEach(item => {
+    item.onclick = () => {
+      document.querySelectorAll('.stay-item').forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+      state.stayType = item.dataset.stay;
+      
+      const timeInput = document.getElementById('input-time');
+      if(timeInput.value < item.dataset.start || timeInput.value > item.dataset.end) {
+        timeInput.value = item.dataset.start;
+      }
+      validateTime();
+    };
+  });
+
+  const validateTime = () => {
+    const t = document.getElementById('input-time').value;
+    const active = document.querySelector('.stay-item.active');
+    const start = active.dataset.start;
+    const end = active.dataset.end;
+    const isValid = t >= start && t <= end;
+    document.getElementById('time-error').style.display = isValid ? 'none' : 'block';
+    state.time = t;
+    return isValid;
+  };
+
+  document.getElementById('input-time').oninput = validateTime;
+  document.getElementById('input-date').onchange = (e) => state.date = e.target.value;
+
+  // Step Change Function
+  function changeStep(n) {
+    state.step = n;
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.step-node').forEach(s => s.classList.remove('active'));
+    document.getElementById(`view-step-${n}`).classList.add('active');
+    for(let i=1; i<=n; i++) document.querySelector(`.step-node[data-step="${i}"]`).classList.add('active');
+    window.scrollTo(0, 0);
   }
 
-  // Update room prices
-  function updateRoomPrices() {
-    const priceKey = getPriceKey(state.formData.stayType);
-    const roomSelection = $('roomSelection');
-    if (!roomSelection) return;
-    
-    roomSelection.innerHTML = '';
-    
-    Object.keys(ROOM_DATA.prices).forEach(room => {
-      const price = ROOM_DATA.prices[room][priceKey];
-      const isAvailable = !state.formData.checkInDate || state.availability[room] > 0;
+  // Step 1 -> 2
+  document.getElementById('btn-to-step-2').onclick = async () => {
+    if(!validateTime()) return;
+
+    const btn = document.getElementById('btn-to-step-2');
+    const txt = document.getElementById('txt-check-avail');
+    const ldr = document.getElementById('loader-check-avail');
+
+    btn.disabled = true;
+    txt.style.display = 'none';
+    ldr.style.display = 'block';
+
+    try {
+      const resp = await fetch(`${CONFIG.URL}?check_in_date=eq.${state.date}&stay_type=eq.${state.stayType}`, {
+        headers: { apikey: CONFIG.KEY, Authorization: `Bearer ${CONFIG.KEY}` }
+      });
+      const data = await resp.json();
       
-      const roomDiv = document.createElement('div');
-      roomDiv.className = `room-option ${!isAvailable ? 'disabled' : ''} ${state.formData.roomType === room ? 'active' : ''}`;
-      roomDiv.dataset.room = room;
-      
-      roomDiv.innerHTML = `
-        <div class="room-card">
-          <div class="room-info">
-            <h3>${room}</h3>
-            <p>${ROOM_DATA.descriptions[room]}</p>
-            <div class="room-meta">
-              <div class="price-badge">Rs ${price}</div>
-              ${state.formData.checkInDate ? `
-                <div class="availability-badge ${isAvailable ? 'available' : 'unavailable'}">
-                  ${isAvailable ? `${state.availability[room]} available` : 'Not available'}
-                </div>
-              ` : ''}
-            </div>
+      state.availabilities = {};
+      ROOMS.forEach(r => {
+        const bookedCount = data.filter(b => b.room_type === r.name).length;
+        state.availabilities[r.name] = Math.max(0, r.cap - bookedCount);
+      });
+
+      renderRoomList();
+      changeStep(2);
+    } catch (e) {
+      alert("Error checking availability. Check connection.");
+    } finally {
+      btn.disabled = false;
+      txt.style.display = 'inline';
+      ldr.style.display = 'none';
+    }
+  };
+
+  const getPriceMultiplier = (stay) => {
+    if (stay === 'Staycation') return 1.4;
+    if (stay === 'Full Stay') return 2.4;
+    return 1;
+  };
+
+  function renderRoomList() {
+    const container = document.getElementById('room-list-container');
+    container.innerHTML = '';
+    
+    const multiplier = getPriceMultiplier(state.stayType);
+
+    ROOMS.forEach(room => {
+      const availCount = state.availabilities[room.name];
+      const isFull = availCount <= 0;
+      const personPrice = Math.round(room.basePrice * multiplier);
+
+      const card = document.createElement('div');
+      card.className = `room-card ${isFull ? 'disabled' : ''}`;
+      card.innerHTML = `
+        <img src="${room.img}" class="room-img" alt="${room.name}">
+        <div class="price-tag">Rs ${personPrice} / person</div>
+        <div class="room-info">
+          <h3>${room.name}</h3>
+          <p>${room.desc}</p>
+          <div class="avail-status ${isFull ? 'avail-false' : 'avail-true'}">
+            ${isFull ? 'Sold Out' : availCount + ' Rooms Available'}
           </div>
         </div>
       `;
-      
-      if (isAvailable) {
-        roomDiv.addEventListener('click', function() {
-          $$('.room-option').forEach(r => r.classList.remove('active'));
-          this.classList.add('active');
-          state.formData.roomType = this.dataset.room;
-        });
-      }
-      
-      roomSelection.appendChild(roomDiv);
-    });
-  }
 
-  updateRoomPrices();
-
-  // Submit button handler
-  elements.submitBtn?.addEventListener('click', async function() {
-    if (!validate.name(state.formData.name)) {
-      elements.nameInput?.classList.add('error');
-      elements.nameError?.classList.add('show');
-      return;
-    }
-    
-    if (!validate.phone(state.formData.phone)) {
-      elements.phoneInput?.classList.add('error');
-      elements.phoneError?.classList.add('show');
-      return;
-    }
-    
-    if (!state.formData.checkInDate || !state.formData.arrivalTime || !state.formData.roomType) {
-      showError('Please fill in all fields');
-      return;
-    }
-    
-    await checkAvailability();
-    
-    if (state.availability[state.formData.roomType] <= 0) {
-      showError('This room is no longer available for the selected date');
-      return;
-    }
-    
-    showConfirmationModal();
-  });
-
-  // Show confirmation modal
-  function showConfirmationModal() {
-    const priceKey = getPriceKey(state.formData.stayType);
-    const amount = ROOM_DATA.prices[state.formData.roomType][priceKey];
-    
-    safeElement('confirmName', el => el.textContent = state.formData.name);
-    safeElement('confirmPhone', el => el.textContent = state.formData.phone);
-    safeElement('confirmDate', el => el.textContent = new Date(state.formData.checkInDate).toLocaleDateString('en-US', { 
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
-    }));
-    safeElement('confirmTime', el => el.textContent = state.formData.arrivalTime);
-    safeElement('confirmStay', el => el.textContent = state.formData.stayType);
-    safeElement('confirmRoom', el => el.textContent = state.formData.roomType);
-    safeElement('confirmAmount', el => el.textContent = `Rs ${amount}`);
-    
-    elements.modal?.classList.add('active');
-  }
-
-  // Edit button
-  $('editBtn')?.addEventListener('click', () => elements.modal?.classList.remove('active'));
-
-  // Confirm button
-  $('confirmBtn')?.addEventListener('click', async function() {
-    const confirmBtnText = $('confirmBtnText');
-    const confirmBtnLoader = $('confirmBtnLoader');
-    
-    this.disabled = true;
-    if (confirmBtnText) confirmBtnText.style.display = 'none';
-    if (confirmBtnLoader) confirmBtnLoader.style.display = 'inline-block';
-    
-    try {
-      const priceKey = getPriceKey(state.formData.stayType);
-      const totalAmount = ROOM_DATA.prices[state.formData.roomType][priceKey];
-      const token = generateToken();
-      
-      const bookingData = {
-  full_name: state.formData.name,
-  phone_number: state.formData.phone,
-  check_in_date: state.formData.checkInDate, // Already in YYYY-MM-DD format
-  arrival_time: state.formData.arrivalTime + ':00', // Add seconds
-  stay_type: state.formData.stayType,
-  room_type: state.formData.roomType,
-  total_amount: parseInt(totalAmount),
-  status: 'pending',
-  qr_token: token
-};
-
-console.log('Sending booking data:', bookingData); // Debug log
-      const result = await fetchSupabase('bookings', {
-        method: 'POST',
-        headers: { 'Prefer': 'return=representation' },
-        body: JSON.stringify(bookingData)
-      });
-      
-      if (result && result.length > 0) {
-        elements.modal?.classList.remove('active');
-        showQRCode(result[0], token);
-        
-        // Reset form
-        if (elements.nameInput) elements.nameInput.value = '';
-        if (elements.phoneInput) elements.phoneInput.value = '';
-        if (elements.dateInput) elements.dateInput.value = '';
-        if (elements.timeInput) elements.timeInput.value = currentTime;
-        
-        state.formData = {
-          name: '',
-          phone: '',
-          checkInDate: '',
-          arrivalTime: currentTime,
-          stayType: 'Daycation',
-          roomType: ''
+      if(!isFull) {
+        card.onclick = () => {
+          document.querySelectorAll('.room-card').forEach(c => c.classList.remove('active'));
+          card.classList.add('active');
+          state.selectedRoom = { ...room, currentPrice: personPrice };
+          document.getElementById('btn-to-step-3').disabled = false;
         };
-        
-        $$('.stay-option').forEach(o => o.classList.remove('active'));
-        document.querySelector('.stay-option[data-stay="Daycation"]')?.classList.add('active');
-        updateRoomPrices();
-      } else {
-        throw new Error('Booking failed');
       }
-    } catch (error) {
-      console.error('Booking error:', error);
-      elements.modal?.classList.remove('active');
-      showError('Booking failed. Please check your configuration and try again.');
-    } finally {
-      this.disabled = false;
-      if (confirmBtnText) confirmBtnText.style.display = 'inline';
-      if (confirmBtnLoader) confirmBtnLoader.style.display = 'none';
-    }
-  });
-
-  // Modal click outside to close
-  elements.modal?.addEventListener('click', (e) => {
-    if (e.target === elements.modal) elements.modal.classList.remove('active');
-  });
-
-  // Show error function
-  function showError(message) {
-    if (elements.errorAlert) {
-      elements.errorAlert.textContent = message;
-      elements.errorAlert.classList.add('show');
-      setTimeout(() => elements.errorAlert.classList.remove('show'), 5000);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }
-
-  // Prevent enter key submitting
-  document.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter' && e.target.tagName !== 'BUTTON') e.preventDefault();
-  });
-}
-
-// ========================================
-// QR CODE
-// ========================================
-function showQRCode(booking, token) {
-  const qrModal = $('qrModal');
-  const qrcodeContainer = $('qrcodeContainer');
-  
-  if (!qrModal || !qrcodeContainer) return;
-  
-  qrcodeContainer.innerHTML = '';
-  
-  if (typeof QRCode !== 'undefined') {
-    new QRCode(qrcodeContainer, {
-      text: token,
-      width: 200,
-      height: 200,
-      colorDark: "#000000",
-      colorLight: "#ffffff",
-      correctLevel: QRCode.CorrectLevel.H
+      container.appendChild(card);
     });
   }
-  
-  safeElement('qrBookingId', el => el.textContent = booking.id);
-  safeElement('qrName', el => el.textContent = booking.full_name);
-  safeElement('qrPhone', el => el.textContent = booking.phone_number);
-  safeElement('qrDate', el => el.textContent = new Date(booking.check_in_date).toLocaleDateString('en-US', {
-    weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
-  }));
-  safeElement('qrTime', el => el.textContent = booking.arrival_time);
-  safeElement('qrStayType', el => el.textContent = booking.stay_type);
-  safeElement('qrRoom', el => el.textContent = booking.room_type);
-  safeElement('qrAmount', el => el.textContent = `Rs ${booking.total_amount}`);
-  
-  qrModal.classList.add('active');
-}
 
-$('downloadQRBtn')?.addEventListener('click', function() {
-  const ticket = $('qrTicket');
-  if (!ticket || typeof html2canvas === 'undefined') return;
-  
-  html2canvas(ticket, { backgroundColor: '#ffffff', scale: 2 }).then(canvas => {
-    const link = document.createElement('a');
-    link.download = `hotel-lumanti-booking-${$('qrBookingId')?.textContent || 'ticket'}.png`;
-    link.href = canvas.toDataURL();
-    link.click();
-  });
-});
+  // Step 2 -> 3
+  document.getElementById('btn-to-step-3').onclick = () => {
+    const total = state.selectedRoom.currentPrice * 2;
+    document.getElementById('summ-stay').innerText = state.stayType;
+    document.getElementById('summ-date').innerText = state.date + ' @ ' + state.time;
+    document.getElementById('summ-room').innerText = state.selectedRoom.name;
+    document.getElementById('summ-rate').innerText = 'Rs ' + state.selectedRoom.currentPrice + ' / person';
+    document.getElementById('summ-total').innerText = 'Rs ' + total;
+    changeStep(3);
+  };
 
-$('closeQRBtn')?.addEventListener('click', function() {
-  $('qrModal')?.classList.remove('active');
-  safeElement('successMessage', el => {
-    el.classList.add('show');
-    setTimeout(() => el.classList.remove('show'), 5000);
-  });
-});
+  // Step 3 -> 4 (Confirm)
+  document.getElementById('btn-confirm-booking').onclick = async () => {
+    const name = document.getElementById('input-name').value.trim();
+    const phone = document.getElementById('input-phone').value.trim();
 
-$('qrModal')?.addEventListener('click', function(e) {
-  if (e.target === this) this.classList.remove('active');
-});
+    if(!name || phone.length < 10) return alert("Please enter valid full name and phone number.");
 
-// ========================================
-// SCANNER
-// ========================================
-function initScanner() {
-  const scannerInput = $('scannerInput');
-  const guestDetails = $('guestDetails');
-  const checkinBtn = $('checkinBtn');
-  let currentBooking = null;
-  
-  if (!scannerInput || !guestDetails || !checkinBtn) return;
-  
-  scannerInput.addEventListener('input', async function() {
-    const token = this.value.trim();
-    
-    if (token.length < 10) {
-      guestDetails.classList.remove('show');
+    const btn = document.getElementById('btn-confirm-booking');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="loader"></div> Finalizing...';
+
+    const refToken = 'LMT-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+    const payload = {
+      full_name: name,
+      phone_number: phone,
+      check_in_date: state.date,
+      arrival_time: state.time,
+      stay_type: state.stayType,
+      room_type: state.selectedRoom.name,
+      total_amount: state.selectedRoom.currentPrice * 2,
+      status: 'confirmed',
+      qr_token: refToken
+    };
+
+    try {
+      const resp = await fetch(CONFIG.URL, {
+        method: 'POST',
+        headers: { 
+          'apikey': CONFIG.KEY, 'Authorization': `Bearer ${CONFIG.KEY}`, 
+          'Content-Type': 'application/json', 'Prefer': 'return=representation' 
+        },
+        body: JSON.stringify(payload)
+      });
+      const data = await resp.json();
+      const confirmed = data[0];
+
+      // Build Ticket
+      document.getElementById('ticket-ref-id').innerText = confirmed.qr_token;
+      document.getElementById('ticket-data-grid').innerHTML = `
+        <div class="ticket-item"><span class="ticket-label">Guest</span><span class="ticket-val">${confirmed.full_name}</span></div>
+        <div class="ticket-item"><span class="ticket-label">Room</span><span class="ticket-val">${confirmed.room_type}</span></div>
+        <div class="ticket-item"><span class="ticket-label">Category</span><span class="ticket-val">${confirmed.stay_type}</span></div>
+        <div class="ticket-item"><span class="ticket-label">Schedule</span><span class="ticket-val">${confirmed.check_in_date} @ ${confirmed.arrival_time}</span></div>
+        <div class="ticket-item" style="margin-top:10px; border-top:1px dashed #ddd; padding-top:10px;">
+          <span class="ticket-label">Total Payable</span>
+          <span class="ticket-val" style="color:var(--primary-dark); font-size:16px;">Rs ${confirmed.total_amount}</span>
+        </div>
+      `;
+
+      // QR Code
+      const qrTarget = document.getElementById('qrcode-display');
+      qrTarget.innerHTML = '';
+      setTimeout(() => {
+        new QRCode(qrTarget, {
+          text: confirmed.qr_token,
+          width: 150,
+          height: 150,
+          colorDark: "#000000",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.H
+        });
+      }, 100);
+
+      changeStep(4);
+    } catch (e) {
+      alert("Booking failed. Please try again.");
+      btn.disabled = false;
+      btn.innerHTML = 'Confirm & Book Now';
+    }
+  };
+
+  // Ticket Capture
+  document.getElementById('btn-download-ticket').onclick = () => {
+    html2canvas(document.getElementById('capture-ticket'), { scale: 3 }).then(canvas => {
+      const a = document.createElement('a');
+      a.download = `Lumanti-Booking-${document.getElementById('ticket-ref-id').innerText}.png`;
+      a.href = canvas.toDataURL();
+      a.click();
+    });
+  };
+
+  // RECEPTION LOGIC
+  const scanInput = document.getElementById('reception-scan-input');
+  let scannedBooking = null;
+
+  scanInput.oninput = async (e) => {
+    const val = e.target.value.trim();
+    if(val.length < 8) {
+      document.getElementById('guest-preview-pane').style.display = 'none';
       return;
     }
-    
-    try {
-      const params = new URLSearchParams({ qr_token: `eq.${token}`, select: '*' });
-      const bookings = await fetchSupabase(`bookings?${params}`);
-      
-      if (bookings && bookings.length > 0) {
-        currentBooking = bookings[0];
-        displayGuestDetails(currentBooking);
-      } else {
-        guestDetails.classList.remove('show');
-        alert('Invalid QR code or booking not found');
-        scannerInput.value = '';
-      }
-    } catch (error) {
-      console.error('Scanner error:', error);
-      alert('Error scanning QR code');
-    }
-  });
-  
-  function displayGuestDetails(booking) {
-    safeElement('guestName', el => el.textContent = booking.full_name);
-    safeElement('guestBookingId', el => el.textContent = `#${booking.id}`);
-    safeElement('guestPhone', el => el.textContent = booking.phone_number);
-    safeElement('guestDate', el => el.textContent = new Date(booking.check_in_date).toLocaleDateString('en-US', {
-      weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
-    }));
-    safeElement('guestTime', el => el.textContent = booking.arrival_time);
-    safeElement('guestStayType', el => el.textContent = booking.stay_type);
-    safeElement('guestRoom', el => el.textContent = booking.room_type);
-    safeElement('guestAmount', el => el.textContent = `Rs ${booking.total_amount}`);
-    
-    const statusBadge = $('guestStatus');
+    lookupBooking(val);
+  };
 
-   
-    if (statusBadge) {
-      statusBadge.textContent = booking.status.charAt(0).toUpperCase() + booking.status.slice(1);
-      statusBadge.className = `status-badge ${booking.status}`;
-    }
+  function showGuestPreview(b) {
+    document.getElementById('prev-guest-name').innerText = b.full_name;
+    document.getElementById('prev-guest-ref').innerText = 'Ref: ' + b.qr_token;
+    document.getElementById('prev-stay-type').innerText = b.stay_type;
+    document.getElementById('prev-room-type').innerText = b.room_type;
+    document.getElementById('prev-checkin-time').innerText = b.check_in_date + ' @ ' + b.arrival_time;
+    document.getElementById('prev-phone').innerText = b.phone_number;
+    document.getElementById('prev-amount').innerText = 'Rs ' + b.total_amount;
     
-    const checkinInfo = $('checkinInfo');
-    if (booking.status === 'checked_in' && booking.checked_in_at) {
-      safeElement('guestCheckinTime', el => el.textContent = new Date(booking.checked_in_at).toLocaleString('en-US', {
-        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-      }));
-      if (checkinInfo) checkinInfo.style.display = 'flex';
-      checkinBtn.disabled = true;
-      safeElement('checkinBtnText', el => el.textContent = 'Already Checked In');
+    const status = document.getElementById('prev-guest-status');
+    status.innerText = b.status.replace('_', ' ');
+    status.className = `status-pill status-${b.status.replace('_', '-')}`;
+
+    const checkInBtn = document.getElementById('btn-reception-checkin');
+    if(b.status === 'checked_in') {
+      checkInBtn.disabled = true;
+      checkInBtn.innerText = 'Guest Already Checked In';
     } else {
-      if (checkinInfo) checkinInfo.style.display = 'none';
-      checkinBtn.disabled = false;
-      safeElement('checkinBtnText', el => el.textContent = 'Check In Guest');
+      checkInBtn.disabled = false;
+      checkInBtn.innerText = 'Confirm Check-In';
     }
-    
-    guestDetails.classList.add('show');
+
+    document.getElementById('guest-preview-pane').style.display = 'block';
   }
-  
-  checkinBtn.addEventListener('click', async function() {
-    if (!currentBooking || currentBooking.status === 'checked_in') return;
-    
-    const checkinBtnText = $('checkinBtnText');
-    const checkinBtnLoader = $('checkinBtnLoader');
-    
-    this.disabled = true;
-    if (checkinBtnText) checkinBtnText.style.display = 'none';
-    if (checkinBtnLoader) checkinBtnLoader.style.display = 'inline-block';
-    
+
+  document.getElementById('btn-reception-checkin').onclick = async () => {
+    if(!scannedBooking) return;
+    const btn = document.getElementById('btn-reception-checkin');
+    btn.disabled = true;
+    btn.innerText = 'Updating...';
+
     try {
-      const updateData = {
-        status: 'checked_in',
-        checked_in_at: new Date().toISOString()
-      };
-      
-      const result = await fetchSupabase(`bookings?id=eq.${currentBooking.id}`, {
+      const resp = await fetch(`${CONFIG.URL}?id=eq.${scannedBooking.id}`, {
         method: 'PATCH',
-        headers: { 'Prefer': 'return=representation' },
-        body: JSON.stringify(updateData)
+        headers: { 
+          'apikey': CONFIG.KEY, 'Authorization': `Bearer ${CONFIG.KEY}`, 
+          'Content-Type': 'application/json', 'Prefer': 'return=representation' 
+        },
+        body: JSON.stringify({ status: 'checked_in' })
       });
-      
-      if (result && result.length > 0) {
-        currentBooking = result[0];
-        displayGuestDetails(currentBooking);
-        alert('✓ Guest checked in successfully!');
-        scannerInput.value = '';
-      } else {
-        throw new Error('Check-in failed');
-      }
-    } catch (error) {
-      console.error('Check-in error:', error);
-      alert('Check-in failed. Please try again.');
-    } finally {
-      this.disabled = false;
-      if (checkinBtnText) checkinBtnText.style.display = 'inline';
-      if (checkinBtnLoader) checkinBtnLoader.style.display = 'none';
+      const data = await resp.json();
+      showGuestPreview(data[0]);
+      alert("Check-in successful!");
+      scanInput.value = '';
+    } catch(e) {
+      alert("Error updating check-in status.");
+      btn.disabled = false;
+      btn.innerText = 'Confirm Check-In';
     }
-  });
-}
-
-// ========================================
-// MODE SWITCHING
-// ========================================
-function initModeSwitch() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const mode = urlParams.get('mode');
-  
-  if (mode === 'scanner') {
-    safeElement('bookingMode', el => el.style.display = 'none');
-    safeElement('scannerMode', el => el.style.display = 'block');
-    initScanner();
-  } else {
-    safeElement('bookingMode', el => el.style.display = 'block');
-    safeElement('scannerMode', el => el.style.display = 'none');
-    initBookingForm();
-  }
-}
-
-// ========================================
-// INITIALIZATION
-// ========================================
-document.addEventListener('DOMContentLoaded', initModeSwitch);
+  };
 </script>
+
 </body>
 </html>
