@@ -1,1021 +1,712 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hotel Lumanti - Reservation</title>
-<link rel="icon" href="assets/favicon.ico" type="image/x-icon">
- <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png"> 
- <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png"> 
- <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png"> 
-<link rel="manifest" href="/site.webmanifest">
-<style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hotel Lumanti | Employee Pro Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <style>
+        :root {
+            --primary: #c9a961;
+            --primary-dark: #a88b4d;
+            --bg-dark: #0a0a0a;
+            --bg-card: #141414;
+            --text-light: #f5f5f5;
+            --text-muted: #b0b0b0;
+            --border: #262626;
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-dark); color: var(--text-light); -webkit-tap-highlight-color: transparent; }
+        
+        .card { 
+            background: var(--bg-card); 
+            border: 1px solid var(--border); 
+            border-radius: 24px; 
+            transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
+        }
+        .card:hover { transform: translateY(-4px); border-color: var(--primary); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+        
+        .btn-primary { background-color: var(--primary); color: #000; font-weight: 800; transition: all 0.2s; }
+        .btn-primary:hover { background-color: var(--primary-dark); transform: scale(1.02); }
+        
+        .status-pill { padding: 4px 12px; border-radius: 99px; font-size: 0.65rem; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; }
+        .tab-active { color: var(--primary); position: relative; }
+        .tab-active::after { content: ''; position: absolute; bottom: -8px; left: 0; right: 0; height: 3px; background: var(--primary); border-radius: 4px; }
+        
+        .modal-blur { backdrop-filter: blur(20px); background: rgba(0,0,0,0.85); }
+        
+        .date-chip { transition: all 0.2s; cursor: pointer; border: 1px solid var(--border); background: #111; }
+        .date-chip.active { background: var(--primary); color: #000; border-color: var(--primary); transform: scale(1.05); }
+        
+        .slot-tag { font-size: 0.65rem; font-weight: 800; padding: 3px 10px; border-radius: 10px; }
+        .avail-bg { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); }
+        .full-bg { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
+        
+        .stay-option { cursor: pointer; }
+        .stay-card { 
+            background: #111; 
+            border: 1px solid var(--border); 
+            border-radius: 16px; 
+            padding: 16px; 
+            text-align: center; 
+            transition: all 0.3s;
+        }
+        .stay-option input:checked + .stay-card { border-color: var(--primary); background: rgba(201,169,97,0.1); box-shadow: 0 0 15px rgba(201,169,97,0.2); }
+        
+        .room-option { cursor: pointer; width: 100%; }
+        .room-card { 
+            background: #111; 
+            border: 2px solid var(--border); 
+            border-radius: 16px; 
+            overflow: hidden; 
+            transition: all 0.3s;
+        }
+        .room-option input:checked + .room-card { border-color: var(--primary); background: rgba(201,169,97,0.05); }
+        .room-option input:checked + .room-card::after {
+            content: '✓';
+            position: absolute; top: 10px; left: 10px;
+            width: 24px; height: 24px; background: var(--primary); color: #000;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900;
+        }
 
-:root {
-  --primary: #c9a961;
-  --primary-dark: #a88b4d;
-  --bg-dark: #1a1a1a;
-  --bg-card: #2a2a2a;
-  --text-light: #f5f5f5;
-  --text-muted: #b0b0b0;
-  --border: #3a3a3a;
-}
-
-body {
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
-  min-height: 100vh;
-  color: var(--text-light);
-  padding: 20px;
-  line-height: 1.6;
-}
-
-.container {
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 0 15px;
-}
-
-.header {
-  text-align: center;
-  padding: 30px 0 40px;
-}
-
-.logo {
-  width: 120px;
-  height: auto;
-  margin-bottom: 20px;
-  opacity: 0.95;
-}
-
-.header h1 {
-  font-size: 28px;
-  font-weight: 300;
-  letter-spacing: 3px;
-  color: var(--primary);
-  margin-bottom: 8px;
-  text-transform: uppercase;
-}
-
-.header p {
-  font-size: 14px;
-  color: var(--text-muted);
-  font-weight: 300;
-  letter-spacing: 1px;
-}
-
-.form-card {
-  background: var(--bg-card);
-  border-radius: 8px;
-  padding: 30px 25px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-  border: 1px solid var(--border);
-}
-
-.success-message {
-  display: none;
-  background: linear-gradient(135deg, #2d4a2b 0%, #3d5a3b 100%);
-  color: #e8f5e9;
-  padding: 16px;
-  border-radius: 8px;
-  margin-bottom: 25px;
-  text-align: center;
-  font-size: 14px;
-  border: 1px solid #4a6741;
-}
-
-.form-group {
-  margin-bottom: 24px;
-}
-
-label {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 13px;
-  color: var(--text-muted);
-  font-weight: 400;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-
-input, select {
-  width: 100%;
-  padding: 12px 14px;
-  background: var(--bg-dark);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  color: var(--text-light);
-  font-size: 15px;
-  transition: all 0.3s;
-  font-family: inherit;
-}
-
-input:focus, select:focus {
-  outline: none;
-  border-color: var(--primary);
-  background: #0f0f0f;
-}
-
-input.error {
-  border-color: #d32f2f;
-}
-
-input::placeholder {
-  color: #666;
-}
-
-.error-message {
-  color: #ff5252;
-  font-size: 12px;
-  margin-top: 6px;
-  display: none;
-}
-
-.error-message.show {
-  display: block;
-}
-
-.stay-options {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 12px;
-}
-
-.stay-option {
-  cursor: pointer;
-}
-
-.stay-option input[type="radio"] {
-  display: none;
-}
-
-.stay-card {
-  background: var(--bg-dark);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 18px;
-  text-align: center;
-  transition: all 0.3s;
-  height: 100%;
-}
-
-.stay-option:hover .stay-card {
-  border-color: var(--primary);
-  background: #0f0f0f;
-}
-
-.stay-option input:checked + .stay-card {
-  border-color: var(--primary);
-  background: linear-gradient(135deg, rgba(201, 169, 97, 0.1) 0%, rgba(201, 169, 97, 0.05) 100%);
-  box-shadow: 0 0 0 1px var(--primary);
-}
-
-.stay-icon {
-  font-size: 32px;
-  margin-bottom: 8px;
-}
-
-.stay-card h4 {
-  font-size: 16px;
-  color: var(--primary);
-  margin-bottom: 4px;
-  font-weight: 400;
-}
-
-.stay-card p {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.room-selection {
-  display: grid;
-  gap: 14px;
-}
-
-.room-option {
-  cursor: pointer;
-}
-
-.room-option input[type="radio"] {
-  display: none;
-}
-
-.room-card {
-  background: var(--bg-dark);
-  border: 2px solid var(--border);
-  border-radius: 6px;
-  overflow: hidden;
-  transition: all 0.3s;
-  position: relative;
-}
-
-.room-option:hover .room-card {
-  border-color: var(--primary);
-  transform: translateY(-2px);
-}
-
-.room-option input:checked + .room-card {
-  border-color: var(--primary);
-  border-width: 3px;
-  box-shadow: 0 0 0 3px rgba(201, 169, 97, 0.2);
-  background: linear-gradient(135deg, rgba(201, 169, 97, 0.08) 0%, rgba(201, 169, 97, 0.03) 100%);
-}
-
-.room-option input:checked + .room-card::before {
-  content: '✓';
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  width: 32px;
-  height: 32px;
-  background: var(--primary);
-  color: var(--bg-dark);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  font-weight: bold;
-  z-index: 10;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-.room-image {
-  height: 240px;
-  position: relative;
-  background: #0a0a0a;
-  overflow: hidden;
-}
-
-.room-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0.9;
-}
-
-.price-badge {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  background: var(--primary);
-  color: var(--bg-dark);
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  text-align: center;
-  line-height: 1.3;
-}
-
-.price-badge .per-person {
-  font-size: 10px;
-  display: block;
-  opacity: 0.9;
-}
-
-.room-info {
-  padding: 16px;
-}
-
-.room-info h3 {
-  font-size: 17px;
-  color: var(--primary);
-  margin-bottom: 4px;
-  font-weight: 400;
-}
-
-.room-info p {
-  font-size: 13px;
-  color: var(--text-muted);
-}
-
-.submit-btn {
-  width: 100%;
-  padding: 14px;
-  background: var(--primary);
-  color: var(--bg-dark);
-  border: none;
-  border-radius: 4px;
-  font-size: 15px;
-  font-weight: 500;
-  cursor: pointer;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  transition: all 0.3s;
-  margin-top: 10px;
-}
-
-.submit-btn:hover {
-  background: var(--primary-dark);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(201, 169, 97, 0.3);
-}
-
-.arrow-right {
-  display: inline-block;
-  width: 0;
-  height: 0;
-  border-top: 5px solid transparent;
-  border-bottom: 5px solid transparent;
-  border-left: 8px solid #000000;
-  margin-left: 8px;
-}
-
-.modal {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.85);
-  z-index: 1000;
-  padding: 20px;
-  overflow-y: auto;
-}
-
-.modal.active {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: fadeIn 0.3s;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.modal-content {
-  background: var(--bg-card);
-  border-radius: 8px;
-  max-width: 500px;
-  width: 100%;
-  border: 1px solid var(--border);
-  animation: slideUp 0.3s;
-}
-
-@keyframes slideUp {
-  from {
-    transform: translateY(30px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+        
+        .glass-header { background: rgba(10, 10, 10, 0.8); backdrop-filter: blur(10px); }
+        .shimmer { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent); background-size: 200% 100%; animation: shimmer 2s infinite; }
+        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/"
   }
 }
-
-.modal-header {
-  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
-  padding: 20px 25px;
-  border-radius: 8px 8px 0 0;
-}
-
-.modal-header h3 {
-  font-size: 20px;
-  font-weight: 400;
-  letter-spacing: 1px;
-  color: var(--bg-dark);
-}
-
-.modal-body {
-  padding: 25px;
-}
-
-.booking-details {
-  background: var(--bg-dark);
-  border-radius: 6px;
-  padding: 20px;
-  margin-bottom: 20px;
-  border: 1px solid var(--border);
-}
-
-.detail-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.detail-row:last-child {
-  border-bottom: none;
-}
-
-.detail-label {
-  font-size: 13px;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.detail-value {
-  font-size: 14px;
-  color: var(--text-light);
-  font-weight: 500;
-  text-align: right;
-}
-
-.total-row {
-  border-top: 2px solid var(--primary);
-  padding-top: 15px;
-  margin-top: 10px;
-}
-
-.total-row .detail-label {
-  color: var(--primary);
-  font-size: 14px;
-}
-
-.total-row .detail-value {
-  color: var(--primary);
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.modal-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.btn {
-  padding: 12px;
-  border: none;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  transition: all 0.3s;
-}
-
-.btn-secondary {
-  background: var(--bg-dark);
-  color: var(--text-light);
-  border: 1px solid var(--border);
-}
-
-.btn-secondary:hover {
-  background: #0f0f0f;
-  border-color: var(--primary);
-}
-
-.btn-primary {
-  background: var(--primary);
-  color: var(--bg-dark);
-}
-
-.btn-primary:hover {
-  background: var(--primary-dark);
-}
-
-.back-icon {
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #111;
-  color: #fff;
-  border-radius: 50%;
-  text-decoration: none;
-  font-size: 18px;
-  font-weight: bold;
-  box-shadow: 0 4px 10px rgba(231, 229, 229, 0.2);
-  transition: transform 0.15s ease, background 0.15s ease;
-}
-
-.back-icon:hover {
-  background: black;
-  transform: translateX(-2px);
-}
-
-@media (max-width: 600px) {
-  .form-card {
-    padding: 25px 20px;
-  }
-  
-  .stay-options {
-    grid-template-columns: 1fr;
-  }
-  
-  .room-image {
-    height: 220px;
-  }
-  
-  .header h1 {
-    font-size: 20px;
-  }
-  
-  .logo {
-    width: 230px;
-  }
-  /* Image Slider Styles */
-.image-slider {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-
-.slider-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
-.slider-image {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0;
-  transition: opacity 0.5s ease-in-out;
-  pointer-events: none;
-}
-
-.slider-image.active {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* Slider Navigation Buttons */
-.slider-btn {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(0, 0, 0, 0.5);
-  color: white;
-  border: none;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  font-size: 20px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.3s ease;
-  z-index: 10;
-  padding: 0;
-  line-height: 1;
-}
-
-.slider-btn:hover {
-  background: rgba(0, 0, 0, 0.7);
-}
-
-.slider-btn.prev {
-  left: 8px;
-}
-
-.slider-btn.next {
-  right: 8px;
-}
-
-/* Slider Dots */
-.slider-dots {
-  position: absolute;
-  bottom: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 6px;
-  z-index: 10;
-}
-
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.5);
-  cursor: pointer;
-  transition: background 0.3s ease, transform 0.3s ease;
-}
-
-.dot:hover {
-  background: rgba(255, 255, 255, 0.8);
-  transform: scale(1.2);
-}
-
-.dot.active {
-  background: white;
-  transform: scale(1.2);
-}
-
-/* Mobile Responsiveness */
-@media (max-width: 768px) {
-  .slider-btn {
-    width: 28px;
-    height: 28px;
-    font-size: 18px;
-  }
-  
-  .slider-btn.prev {
-    left: 6px;
-  }
-  
-  .slider-btn.next {
-    right: 6px;
-  }
-  
-  .slider-dots {
-    bottom: 10px;
-  }
-  
-  .dot {
-    width: 7px;
-    height: 7px;
-  }
-}
-}
-</style>
-</head>
-<body>
-
-<div class="container">
-  <a href="/" class="back-icon" aria-label="Back to home">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-      <path d="M15 18l-6-6 6-6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-  </a>
-
-  <div class="header">
-    <img class="logo" src="/assets/logo.png" alt="Lumanti - Heritage Hospitality logo"/>
-    <h1>Reserve your Room with Us.</h1>
-    <p></p>
-  </div>
-
-  <div class="form-card">
-    <div class="success-message" id="successMessage">
-      ✓ Reservation submitted successfully. We'll contact you shortly.
-    </div>
-
-    <form id="reservationForm" action="https://docs.google.com/forms/u/0/d/e/1FAIpQLSfOyj-h1kA3iiwrE1Bjq7oQTg3fBLTQEGoui4Ce10kBJmCHVQ/formResponse" method="POST" target="hidden_iframe">
-      <iframe name="hidden_iframe" style="display:none;"></iframe>
-
-      <div class="form-group">
-        <label>Full Name *</label>
-        <input
-          type="text"
-          id="nameInput"
-          name="entry.1842100595"
-          placeholder="Enter your name"
-          required
-        />
-        <div class="error-message" id="nameError">Name must be at least 5 letters</div>
-      </div>
-
-      <div class="form-group">
-        <label>Phone Number *</label>
-        <input
-          type="tel"
-          id="phoneInput"
-          name="entry.975055830"
-          placeholder="98XXXXXXXX"
-          required
-          pattern="[6-9][0-9]{9}"
-        />
-        <div class="error-message" id="phoneError">Enter a valid 10-digit phone number</div>
-      </div>
-
-      <div class="form-group">
-        <label>Check-in Date *</label>
-        <input type="date" required id="dateInput">
-        <input type="hidden" name="entry.1430989006_year" id="dateYear">
-        <input type="hidden" name="entry.1430989006_month" id="dateMonth">
-        <input type="hidden" name="entry.1430989006_day" id="dateDay">
-      </div>
-
-      <div class="form-group">
-        <label>Arrival Time *</label>
-        <input type="time" name="entry.1716276686" id="timeInput" required>
-      </div>
-
-      <div class="form-group">
-        <label>Stay Type *</label>
-        <div class="stay-options">
-          <label class="stay-option">
-            <input type="radio" name="entry.1521729051" value="Daycation" id="daycation" required>
-            <div class="stay-card">
-              <div class="stay-icon">☀️</div>
-              <h4>Daycation</h4>
-              <p>12 Noon - 5 PM</p>
-            </div>
-          </label>
-          <label class="stay-option">
-            <input type="radio" name="entry.1521729051" value="Staycation" id="staycation">
-            <div class="stay-card">
-              <div class="stay-icon">🌙</div>
-              <h4>Staycation</h4>
-              <p>5 PM - 11 AM Next Day</p>
-            </div>
-          </label>
-          <label class="stay-option">
-            <input type="radio" name="entry.1521729051" value="Full Stay" id="fullstay">
-            <div class="stay-card">
-              <div class="stay-icon">🌓</div>
-              <h4>Full Stay</h4>
-              <p>12 Noon - 11 AM</p>
-            </div>
-          </label>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label>Room Selection *</label>
-        <div class="room-selection">
-          <label class="room-option">
-            <input type="radio" name="entry.278765268" value="Mini" required>
-            <div class="room-card">
-              <div class="room-image">
-                <img src="/assets/mini.png" alt="Mini">
-                <div class="price-badge" id="price1">Rs 499<span class="per-person">per person</span></div>
-              </div>
-              <div class="room-info">
-                <h3>Mini</h3>
-                <p>A small, cozy room with a fan and attached bathroom</p>
-              </div>
-            </div>
-          </label>
-
-          <label class="room-option">
-            <input type="radio" name="entry.278765268" value="Deluxe">
-            <div class="room-card">
-              <div class="room-image">
-                <img src="/assets/deluxe.png" alt="Deluxe">
-                <div class="price-badge" id="price2">Rs 549<span class="per-person">per person</span></div>
-              </div>
-              <div class="room-info">
-                <h3>Deluxe</h3>
-                <p>A medium-sized fan-cooled room with poetic charm</p>
-              </div>
-            </div>
-          </label>
-
-          <label class="room-option">
-            <input type="radio" name="entry.278765268" value="Classic">
-            <div class="room-card">
-              <div class="room-image">
-                <img src="/assets/classic.png" alt="Classic">
-                <div class="price-badge" id="price3">Rs 599<span class="per-person">per person</span></div>
-              </div>
-              <div class="room-info">
-                <h3>Classic</h3>
-                <p>A spacious fan-cooled room with street and temple views</p>
-              </div>
-            </div>
-          </label>
-
-          <label class="room-option">
-            <input type="radio" name="entry.278765268" value="Suite">
-            <div class="room-card">
-              <div class="room-image">
-                <img src="/assets/suite.png" alt="Suite">
-                <div class="price-badge" id="price4">Rs 749<span class="per-person">per person</span></div>
-              </div>
-              <div class="room-info">
-                <h3>Suite</h3>
-                <p>Air-conditioned comfort with a small private balcony</p>
-              </div>
-            </div>
-          </label>
-        </div>
-      </div>
-
-      <button type="button" class="submit-btn" onclick="showModal()">
-        Review Booking <span class="arrow-right"></span>
-      </button>
-    </form>
-  </div>
-</div>
-
-<div class="modal" id="confirmModal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h3>Confirm Reservation</h3>
-    </div>
-    <div class="modal-body">
-      <div class="booking-details">
-        <div class="detail-row">
-          <span class="detail-label">Name</span>
-          <span class="detail-value" id="confirmName">-</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Phone</span>
-          <span class="detail-value" id="confirmPhone">-</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Check-in</span>
-          <span class="detail-value" id="confirmDate">-</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Time</span>
-          <span class="detail-value" id="confirmTime">-</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Stay Type</span>
-          <span class="detail-value" id="confirmStay">-</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Room</span>
-          <span class="detail-value" id="confirmRoom">-</span>
-        </div>
-        <div class="detail-row total-row">
-          <span class="detail-label">Total (2 People)</span>
-          <span class="detail-value" id="confirmAmount">-</span>
-        </div>
-      </div>
-
-      <div class="modal-actions">
-        <button class="btn btn-secondary" onclick="closeModal()">Edit</button>
-        <button class="btn btn-primary" onclick="submitForm()">Confirm</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-const form = document.getElementById('reservationForm');
-const modal = document.getElementById('confirmModal');
-const successMsg = document.getElementById('successMessage');
-const nameInput = document.getElementById('nameInput');
-const phoneInput = document.getElementById('phoneInput');
-const dateInput = document.getElementById('dateInput');
-const timeInput = document.getElementById('timeInput');
-const nameError = document.getElementById('nameError');
-const phoneError = document.getElementById('phoneError');
-
-const prices = {
-  'Mini': { daycation: 499, staycation: 699, fullstay: 1199 },
-  'Deluxe': { daycation: 549, staycation: 799, fullstay: 1349 },
-  'Classic': { daycation: 599, staycation: 899, fullstay: 1499 },
-  'Suite': { daycation: 749, staycation: 1099, fullstay: 1849 }
-};
-
-// Set minimum date to today
-const today = new Date().toISOString().split('T')[0];
-dateInput.min = today;
-
-// Real-time name validation
-nameInput.addEventListener('input', function() {
-  const value = this.value.trim();
-  const lettersOnly = value.replace(/[^A-Za-z\s]/g, '');
-  
-  if (value !== lettersOnly) {
-    this.value = lettersOnly;
-  }
-  
-  if (lettersOnly.length > 0 && lettersOnly.length < 5) {
-    this.classList.add('error');
-    nameError.classList.add('show');
-  } else {
-    this.classList.remove('error');
-    nameError.classList.remove('show');
-  }
-});
-
-// Real-time phone validation
-phoneInput.addEventListener('input', function() {
-  const value = this.value.replace(/\D/g, '');
-  this.value = value;
-  
-  if (value.length > 0 && value.length < 10) {
-    this.classList.add('error');
-    phoneError.classList.add('show');
-  } else {
-    this.classList.remove('error');
-    phoneError.classList.remove('show');
-  }
-});
-
-function updatePrices() {
-  const stayInput = document.querySelector('input[name="entry.1521729051"]:checked');
-  let stay = 'daycation';
-  
-  if (stayInput) {
-    const value = stayInput.value.toLowerCase().replace(' ', '');
-    stay = value === 'fullstay' ? 'fullstay' : (value === 'staycation' ? 'staycation' : 'daycation');
-  }
-  
-  document.getElementById('price1').innerHTML = `Rs ${prices['Mini'][stay].toLocaleString()}<span class="per-person">per person</span>`;
-  document.getElementById('price2').innerHTML = `Rs ${prices['Deluxe'][stay].toLocaleString()}<span class="per-person">per person</span>`;
-  document.getElementById('price3').innerHTML = `Rs ${prices['Classic'][stay].toLocaleString()}<span class="per-person">per person</span>`;
-  document.getElementById('price4').innerHTML = `Rs ${prices['Suite'][stay].toLocaleString()}<span class="per-person">per person</span>`;
-}
-
-document.querySelectorAll('input[name="entry.1521729051"]').forEach(r => 
-  r.addEventListener('change', updatePrices)
-);
-
-// Set default stay type
-document.getElementById('daycation').checked = true;
-updatePrices();
-
-function validateForm() {
-  const name = nameInput.value.trim().replace(/[^A-Za-z\s]/g, '');
-  const phone = phoneInput.value.replace(/\D/g, '');
-  
-  let isValid = true;
-  
-  if (name.length < 5) {
-    nameInput.classList.add('error');
-    nameError.classList.add('show');
-    isValid = false;
-  }
-  
-  if (phone.length !== 10) {
-    phoneInput.classList.add('error');
-    phoneError.classList.add('show');
-    isValid = false;
-  }
-  
-  return isValid;
-}
-
-function showModal() {
-  if (!validateForm() || !form.checkValidity()) {
-    form.reportValidity();
-    return;
-  }
-
-  const name = nameInput.value;
-  const phone = phoneInput.value;
-  const date = dateInput.value;
-  const time = timeInput.value;
-  const stay = document.querySelector('input[name="entry.1521729051"]:checked')?.value || '-';
-  const room = document.querySelector('input[name="entry.278765268"]:checked')?.value || '-';
-
-  // Split date for Google Forms
-  if (date) {
-    const dateObj = new Date(date + 'T00:00:00');
-    document.getElementById('dateYear').value = dateObj.getFullYear();
-    document.getElementById('dateMonth').value = dateObj.getMonth() + 1;
-    document.getElementById('dateDay').value = dateObj.getDate();
-  }
-
-  const stayType = stay.toLowerCase().replace(' ', '');
-  const stayKey = stayType === 'fullstay' ? 'fullstay' : (stayType === 'staycation' ? 'staycation' : 'daycation');
-  const perPersonPrice = room !== '-' && prices[room] ? prices[room][stayKey] : 0;
-  const totalPrice = perPersonPrice * 2;
-  const amount = totalPrice > 0 ? `Rs ${totalPrice.toLocaleString()}` : '-';
-
-  const formattedDate = date ? new Date(date + 'T00:00:00').toLocaleDateString('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric'
-  }) : '-';
-
-  const formattedTime = time ? new Date('2000-01-01T' + time).toLocaleTimeString('en-US', {
-    hour: 'numeric', minute: '2-digit', hour12: true
-  }) : '-';
-
-  document.getElementById('confirmName').textContent = name;
-  document.getElementById('confirmPhone').textContent = phone;
-  document.getElementById('confirmDate').textContent = formattedDate;
-  document.getElementById('confirmTime').textContent = formattedTime;
-  document.getElementById('confirmStay').textContent = stay;
-  document.getElementById('confirmRoom').textContent = room;
-  document.getElementById('confirmAmount').textContent = amount;
-
-  modal.classList.add('active');
-  document.body.style.overflow = 'hidden';
-}
-
-function closeModal() {
-  modal.classList.remove('active');
-  document.body.style.overflow = 'auto';
-}
-
-function submitForm() {
-  closeModal();
-  form.submit();
-  
-  // Redirect to confirmation page after form submission
-  setTimeout(() => {
-    window.location.href = 'thankyou.html';
-  }, 500);
-}
-
-modal.addEventListener('click', e => {
-  if (e.target === modal) closeModal();
-});
-
-window.showModal = showModal;
-window.closeModal = closeModal;
-window.submitForm = submitForm;
 </script>
+</head>
+<body class="antialiased">
+
+    <!-- Auth Screen -->
+    <div id="login-screen" class="fixed inset-0 z-[100] flex items-center justify-center bg-black p-6">
+        <div class="w-full max-w-sm space-y-12">
+            <div class="text-center">
+                <h1 class="text-6xl font-black tracking-tighter text-[#c9a961] mb-2">Lumanti</h1>
+                <p class="text-gray-500 font-black text-[10px] tracking-[0.4em] uppercase">Employee Pro Suite</p>
+            </div>
+            <form id="login-form" class="space-y-4">
+                <input type="email" id="email" placeholder="ACCESS EMAIL" class="w-full px-6 py-5 bg-[#111] border border-[#222] rounded-2xl text-white outline-none focus:border-[#c9a961] transition-all font-bold" required>
+                <input type="password" id="password" placeholder="PASSWORD" class="w-full px-6 py-5 bg-[#111] border border-[#222] rounded-2xl text-white outline-none focus:border-[#c9a961] transition-all font-bold" required>
+                <button type="submit" class="w-full py-5 btn-primary rounded-2xl text-xs uppercase tracking-[0.2em] shadow-2xl shadow-[#c9a961]/20">Authorize</button>
+                <p id="login-error" class="text-red-500 text-[10px] font-black text-center hidden bg-red-500/10 py-4 rounded-2xl uppercase tracking-widest border border-red-500/20"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="app" class="hidden min-h-screen pb-24 lg:pb-0">
+        <!-- Header -->
+        <header class="glass-header sticky top-0 z-40 w-full border-b border-[#222] px-4 sm:px-8 py-5">
+            <div class="max-w-7xl mx-auto flex items-center justify-between">
+                <div class="flex items-center gap-6 sm:gap-14">
+                    <h2 class="text-2xl sm:text-3xl font-black text-[#c9a961] tracking-tighter">LUMANTI</h2>
+                    <nav class="hidden md:flex gap-10">
+                        <button onclick="switchTab('bookings')" class="nav-tab text-[10px] font-black tracking-[0.2em] transition-all tab-active uppercase" id="tab-bookings">Operations</button>
+                        <button onclick="switchTab('insights')" class="nav-tab text-[10px] font-black tracking-[0.2em] transition-all text-gray-500 uppercase hover:text-white" id="tab-insights">Intelligence</button>
+                    </nav>
+                </div>
+                <div class="flex items-center gap-2 sm:gap-4">
+                    <button onclick="openQRScanner()" class="p-3 sm:p-4 bg-[#111] text-[#c9a961] rounded-2xl border border-[#222] hover:bg-[#c9a961] hover:text-black transition-all">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                    </button>
+                    <button onclick="openBookingModal()" class="px-5 sm:px-8 py-3 sm:py-4 btn-primary rounded-2xl text-[10px] tracking-widest uppercase shadow-xl shadow-[#c9a961]/10">+ Reserve</button>
+                    <button onclick="logout()" class="p-3 sm:p-4 text-gray-500 hover:text-red-500 transition-all">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto p-4 sm:p-8 space-y-12">
+            
+            <!-- Operations Section -->
+            <section id="content-bookings" class="space-y-12">
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                    <!-- Calendar -->
+                    <div class="card p-6 lg:col-span-1 space-y-6">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Global Access</h3>
+                            <div class="relative">
+                                <input type="date" id="calendar-input" onchange="selectDate(this.value)" class="w-8 h-8 opacity-0 cursor-pointer z-10">
+                                <button class="absolute inset-0 p-2 bg-[#c9a961]/10 text-[#c9a961] rounded-xl border border-[#c9a961]/20">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex gap-3 overflow-x-auto pb-4 no-scrollbar scroll-smooth" id="date-selector"></div>
+                    </div>
+
+                    <!-- Availability Tracker -->
+                    <div class="card p-6 lg:col-span-3 space-y-6">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Slot-Wise Occupancy</h3>
+                            <div class="flex gap-4">
+                                <span class="flex items-center gap-2 text-[8px] font-bold text-emerald-500 uppercase"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Open</span>
+                                <span class="flex items-center gap-2 text-[8px] font-bold text-red-500 uppercase"><span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Sold</span>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" id="availability-grid"></div>
+                    </div>
+                </div>
+
+                <!-- Manifest -->
+                <div class="space-y-8">
+                    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+                        <h3 class="text-4xl font-black tracking-tighter">Manifest</h3>
+                        <div class="flex bg-[#111] p-1 rounded-2xl border border-[#222]">
+                            <button onclick="filterBookings('all')" class="flex-1 sm:px-8 py-3 text-[9px] font-black rounded-xl filter-btn bg-[#c9a961] text-black" id="filter-all">ALL</button>
+                            <button onclick="filterBookings('pending')" class="flex-1 sm:px-8 py-3 text-[9px] font-black rounded-xl filter-btn text-gray-500" id="filter-pending">WAITING</button>
+                            <button onclick="filterBookings('checked-in')" class="flex-1 sm:px-8 py-3 text-[9px] font-black rounded-xl filter-btn text-gray-500" id="filter-checked-in">ACTIVE</button>
+                        </div>
+                    </div>
+                    <div id="bookings-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+                </div>
+            </section>
+
+            <!-- Intelligence Section -->
+            <section id="content-insights" class="hidden space-y-12">
+                <div class="flex items-end justify-between">
+                    <h3 class="text-4xl font-black tracking-tighter">Business Analytics</h3>
+                    <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Real-time stats</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="card p-10 bg-[#c9a961] text-black shadow-2xl shadow-[#c9a961]/20 relative overflow-hidden">
+                        <div class="relative z-10">
+                            <p class="text-[10px] font-black uppercase tracking-widest mb-6 opacity-60">Revenue Realized</p>
+                            <p class="text-5xl font-black mb-2" id="net-revenue">Rs 0</p>
+                            <p class="text-[10px] font-bold opacity-40 uppercase">Verified Collections</p>
+                        </div>
+                        <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-black/5 rounded-full"></div>
+                    </div>
+                    <div class="card p-10 flex flex-col justify-between">
+                        <div>
+                            <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-6">Unpaid Balance</p>
+                            <p class="text-5xl font-black mb-2 text-amber-500" id="pending-revenue">Rs 0</p>
+                        </div>
+                        <p class="text-[10px] font-bold text-gray-500 uppercase">Receivables</p>
+                    </div>
+                    <div class="card p-10 flex flex-col justify-between">
+                        <div>
+                            <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-6">Occupancy Ratio</p>
+                            <p class="text-5xl font-black mb-2" id="snap-occ">0%</p>
+                        </div>
+                        <div class="w-full bg-[#111] h-2 rounded-full overflow-hidden border border-[#222]">
+                            <div id="snap-occ-bar" class="h-full bg-[#c9a961] rounded-full transition-all duration-1000" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="card p-8 sm:p-10 space-y-8">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-[#c9a961]">Revenue Channels</h4>
+                        <div class="space-y-6" id="payment-channel-list"></div>
+                    </div>
+                    <div class="card p-8 sm:p-10 space-y-8">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-[#c9a961]">Stay Distribution</h4>
+                        <div class="grid grid-cols-3 gap-4" id="stay-type-distribution"></div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Enhanced Booking Modal -->
+    <div id="booking-modal" class="fixed inset-0 z-[70] hidden items-center justify-center p-4 modal-blur overflow-y-auto">
+        <div class="bg-[#141414] w-full max-w-4xl rounded-[40px] p-6 sm:p-12 border border-[#262626] shadow-2xl my-8">
+            <div class="flex justify-between items-center mb-10">
+                <h3 class="text-2xl sm:text-3xl font-black tracking-tight text-[#c9a961]" id="modal-title">New Stay</h3>
+                <button onclick="closeModals()" class="p-2 text-gray-500 hover:text-white transition-colors">
+                    <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            
+            <form id="booking-form" class="space-y-10">
+                <input type="hidden" id="editing-id" value="">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Left: Guest & Configuration -->
+                    <div class="space-y-8">
+                        <div>
+                            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-4">Guest Identity</label>
+                            <input type="text" id="b-name" placeholder="Full Name" class="w-full p-5 bg-[#0a0a0a] border border-[#222] rounded-2xl text-white outline-none focus:border-[#c9a961] mb-3" required>
+                            <input type="tel" id="b-phone" placeholder="Phone Number" class="w-full p-5 bg-[#0a0a0a] border border-[#222] rounded-2xl text-white outline-none focus:border-[#c9a961]" required>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-4">Schedule</label>
+                            <input type="date" id="b-date" class="w-full p-5 bg-[#0a0a0a] border border-[#222] rounded-2xl text-white outline-none focus:border-[#c9a961] mb-3" required>
+                            <div class="grid grid-cols-2 gap-3">
+                                <select id="b-method" class="p-5 bg-[#0a0a0a] border border-[#222] rounded-2xl text-white outline-none focus:border-[#c9a961]">
+                                    <option value="Cash">Cash</option>
+                                    <option value="Fonepay">Fonepay</option>
+                                    <option value="Card">Card</option>
+                                </select>
+                                <select id="b-pay-status" class="p-5 bg-[#0a0a0a] border border-[#222] rounded-2xl text-white outline-none focus:border-[#c9a961]">
+                                    <option value="unpaid">Unpaid</option>
+                                    <option value="paid">Paid</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-4">Operational Status</label>
+                            <select id="b-status" class="w-full p-5 bg-[#0a0a0a] border border-[#222] rounded-2xl text-white outline-none focus:border-[#c9a961]">
+                                <option value="pending">Waiting</option>
+                                <option value="checked-in">Active</option>
+                                <option value="checked-out">Checked Out</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Right: Stay & Room Selection (Snippet UI Style) -->
+                    <div class="space-y-8">
+                        <div>
+                            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-4">Select Stay Type</label>
+                            <div class="grid grid-cols-3 gap-3">
+                                <label class="stay-option">
+                                    <input type="radio" name="stayType" value="Daycation" class="hidden" checked onchange="updateStayConfig('Daycation')">
+                                    <div class="stay-card">
+                                        <div class="text-2xl mb-1">☀️</div>
+                                        <p class="text-[10px] font-black uppercase text-[#c9a961]">Day</p>
+                                        <p class="text-[8px] text-gray-500">12-5PM</p>
+                                    </div>
+                                </label>
+                                <label class="stay-option">
+                                    <input type="radio" name="stayType" value="Staycation" class="hidden" onchange="updateStayConfig('Staycation')">
+                                    <div class="stay-card">
+                                        <div class="text-2xl mb-1">🌙</div>
+                                        <p class="text-[10px] font-black uppercase text-[#c9a961]">Night</p>
+                                        <p class="text-[8px] text-gray-500">5PM-11AM</p>
+                                    </div>
+                                </label>
+                                <label class="stay-option">
+                                    <input type="radio" name="stayType" value="Full Stay" class="hidden" onchange="updateStayConfig('Full Stay')">
+                                    <div class="stay-card">
+                                        <div class="text-2xl mb-1">🌓</div>
+                                        <p class="text-[10px] font-black uppercase text-[#c9a961]">Full</p>
+                                        <p class="text-[8px] text-gray-500">24 Hrs</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-4">Select Room</label>
+                            <div class="space-y-3 max-h-[250px] overflow-y-auto pr-2 no-scrollbar" id="room-selection-list">
+                                <!-- Generated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer: Pricing & Actions -->
+                <div class="bg-[#0a0a0a] p-8 sm:p-10 rounded-[32px] border border-[#222] space-y-8">
+                    <div class="flex flex-col sm:flex-row justify-between items-center gap-6">
+                        <div class="flex flex-col items-center sm:items-start">
+                            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Base Amount (NPR)</label>
+                            <input type="number" id="b-base-price" oninput="calculateTotal()" class="w-40 bg-[#111] p-4 rounded-xl border border-[#222] text-center font-black text-2xl text-[#c9a961] focus:border-[#c9a961] outline-none">
+                        </div>
+                        <div class="flex gap-2">
+                            <button type="button" onclick="applyDiscount(10)" class="px-6 py-3 bg-[#111] border border-[#222] rounded-xl text-[10px] font-black text-gray-400 hover:bg-[#c9a961] hover:text-black transition-all">10%</button>
+                            <button type="button" onclick="applyDiscount(20)" class="px-6 py-3 bg-[#111] border border-[#222] rounded-xl text-[10px] font-black text-gray-400 hover:bg-[#c9a961] hover:text-black transition-all">20%</button>
+                            <button type="button" onclick="applyDiscount(30)" class="px-6 py-3 bg-[#111] border border-[#222] rounded-xl text-[10px] font-black text-gray-400 hover:bg-[#c9a961] hover:text-black transition-all">30%</button>
+                            <button type="button" onclick="applyDiscount(0)" class="px-6 py-3 bg-[#111] border border-[#222] rounded-xl text-[10px] font-black text-gray-400 hover:bg-white hover:text-black transition-all">0%</button>
+                        </div>
+                        <div class="text-center sm:text-right">
+                            <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Total Payable (2 Guests)</p>
+                            <p class="text-5xl font-black text-[#c9a961]" id="final-amount">Rs 0</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-[#222]">
+                        <button type="button" onclick="closeModals()" class="flex-1 py-6 bg-transparent border border-gray-800 rounded-[24px] text-[10px] font-black uppercase tracking-widest hover:bg-gray-900 transition-all">Discard</button>
+                        <button type="submit" id="save-btn" class="flex-[2] py-6 btn-primary rounded-[24px] text-[10px] uppercase tracking-widest shadow-2xl shadow-[#c9a961]/20">Confirm Stay</button>
+                    </div>
+                </div>
+                <input type="hidden" id="b-discount" value="0">
+                <input type="hidden" id="b-amount" value="0">
+                <input type="hidden" id="b-stay-type" value="Daycation">
+                <input type="hidden" id="b-room-type" value="Mini">
+            </form>
+        </div>
+    </div>
+
+    <!-- QR & Toast -->
+    <div id="qr-scanner-modal" class="fixed inset-0 z-[80] hidden items-center justify-center p-4 modal-blur">
+        <div class="bg-[#141414] w-full max-w-md rounded-[40px] p-10 border border-[#262626] shadow-2xl relative text-center">
+            <button onclick="closeModals()" class="absolute top-8 right-8 text-gray-500 hover:text-white transition-colors">
+                <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+            <h3 class="text-2xl font-black mb-8 tracking-tight text-[#c9a961]">One-Touch Check-in</h3>
+            <div id="qr-reader" class="rounded-[30px] overflow-hidden border-4 border-dashed border-[#222] mb-6 bg-black"></div>
+            <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Auto-validating unique guest tokens</p>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-24 sm:bottom-10 left-1/2 -translate-x-1/2 px-10 py-5 bg-[#c9a961] text-black rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl z-[1000] hidden animate-bounce">
+        Done!
+    </div>
+
+    <script type="module">
+        const SUPABASE_URL = 'https://fzwnglhxtmtltpysdzma.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6d25nbGh4dG10bHRweXNkem1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1ODE0MzAsImV4cCI6MjA4NDE1NzQzMH0.PuES2nphqkKU-FqzBge6LlptVibSfeTQcUExEdfTleg';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let allBookings = [];
+        let currentFilter = 'all';
+        let selectedDate = new Date().toISOString().split('T')[0];
+        let qrScanner = null;
+
+        const ROOM_DATA = {
+            'Mini': { img: '/assets/mini.png', desc: 'Cozy room with fan & attached bathroom', prices: { 'Daycation': 499, 'Staycation': 699, 'Full Stay': 1199 }, inventory: 5 },
+            'Deluxe': { img: '/assets/deluxe.png', desc: 'Medium-sized fan-cooled poetic room', prices: { 'Daycation': 549, 'Staycation': 799, 'Full Stay': 1349 }, inventory: 2 },
+            'Classic': { img: '/assets/classic.png', desc: 'Spacious with street and temple views', prices: { 'Daycation': 599, 'Staycation': 899, 'Full Stay': 1499 }, inventory: 1 },
+            'Suite': { img: '/assets/suite.png', desc: 'AC comfort with small private balcony', prices: { 'Daycation': 749, 'Staycation': 1099, 'Full Stay': 1849 }, inventory: 0 } // Extra class
+        };
+
+        const TOTAL_ROOMS = 8; // Based on 5+2+1
+
+        // AUTH
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const { error } = await supabase.auth.signInWithPassword({
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value
+            });
+            if (error) {
+                const err = document.getElementById('login-error');
+                err.textContent = error.message;
+                err.classList.remove('hidden');
+            } else checkSession();
+        });
+
+        window.checkSession = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app').classList.remove('hidden');
+                initDateUI();
+                loadData();
+            }
+        };
+
+        window.logout = async () => { await supabase.auth.signOut(); window.location.reload(); };
+
+        // CORE UI
+        function initDateUI() {
+            const container = document.getElementById('date-selector');
+            const dates = [];
+            const baseDate = new Date(selectedDate);
+            for (let i = -3; i <= 20; i++) {
+                const date = new Date(baseDate);
+                date.setDate(baseDate.getDate() + i);
+                dates.push(date);
+            }
+            container.innerHTML = dates.map(date => {
+                const dStr = date.toISOString().split('T')[0];
+                const active = dStr === selectedDate ? 'active' : '';
+                return `
+                    <button onclick="selectDate('${dStr}')" class="date-chip ${active} flex-shrink-0 min-w-[75px] h-[95px] flex flex-col items-center justify-center rounded-[24px]">
+                        <span class="text-[10px] font-black uppercase opacity-30 tracking-tight">${date.toLocaleDateString('en-US', {weekday:'short'})}</span>
+                        <span class="text-2xl font-black my-0.5 tracking-tighter">${date.getDate()}</span>
+                        <span class="text-[9px] font-black opacity-20 uppercase tracking-widest">${date.toLocaleDateString('en-US', {month:'short'})}</span>
+                    </button>
+                `;
+            }).join('');
+            document.getElementById('calendar-input').value = selectedDate;
+        }
+
+        window.selectDate = (date) => {
+            selectedDate = date;
+            initDateUI();
+            updateAvailBoard();
+            renderBookings();
+            renderInsights();
+        };
+
+        function updateAvailBoard() {
+            const dateBookings = allBookings.filter(b => b.check_in_date === selectedDate && b.status !== 'cancelled');
+            const grid = document.getElementById('availability-grid');
+            grid.innerHTML = Object.entries(ROOM_DATA).filter(([type, data]) => data.inventory > 0).map(([type, data]) => {
+                const full = dateBookings.filter(b => (b.room_type === type || b.room_type === `Cozy ${type}`) && b.stay_type === 'Full Stay').length;
+                const day = dateBookings.filter(b => (b.room_type === type || b.room_type === `Cozy ${type}`) && b.stay_type === 'Daycation').length;
+                const night = dateBookings.filter(b => (b.room_type === type || b.room_type === `Cozy ${type}`) && b.stay_type === 'Staycation').length;
+                const dayAvail = data.inventory - (full + day);
+                const nightAvail = data.inventory - (full + night);
+                return `
+                    <div class="p-5 bg-black rounded-[24px] border border-[#222] space-y-3">
+                        <p class="text-[9px] font-black text-gray-500 uppercase tracking-widest text-center">${type}</p>
+                        <div class="flex flex-col gap-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[8px] font-black text-gray-600 uppercase">Day Slot</span>
+                                <span class="slot-tag ${dayAvail > 0 ? 'avail-bg' : 'full-bg'}">${dayAvail}/${data.inventory}</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-[8px] font-black text-gray-600 uppercase">Night Slot</span>
+                                <span class="slot-tag ${nightAvail > 0 ? 'avail-bg' : 'full-bg'}">${nightAvail}/${data.inventory}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function loadData() {
+            const { data, error } = await supabase.from('bookings').select('*').order('created_at', { ascending: false });
+            if (!error) {
+                allBookings = data || [];
+                renderBookings();
+                renderInsights();
+                updateAvailBoard();
+            }
+        }
+
+        function renderBookings() {
+            const grid = document.getElementById('bookings-grid');
+            let filtered = allBookings.filter(b => b.check_in_date === selectedDate);
+            if (currentFilter !== 'all') filtered = filtered.filter(b => b.status === currentFilter);
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-40 text-center opacity-10 font-black uppercase text-sm tracking-[0.5em]">No Activity Log</div>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(b => {
+                const colors = { 'pending': 'bg-amber-500/10 text-amber-500', 'checked-in': 'bg-emerald-500/10 text-emerald-500', 'checked-out': 'bg-white/5 text-gray-500', 'cancelled': 'bg-red-500/10 text-red-500' };
+                return `
+                    <div class="card p-8 flex flex-col justify-between min-h-[360px] relative overflow-hidden">
+                        <div class="space-y-6 relative z-10">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <h4 class="text-2xl font-black tracking-tighter text-white mb-1 leading-none">${b.full_name}</h4>
+                                    <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest">${b.phone_number}</p>
+                                </div>
+                                <div class="flex flex-col items-end gap-2">
+                                    <span class="status-pill ${colors[b.status]}">${b.status}</span>
+                                    <button onclick="editBooking('${b.id}')" class="p-2.5 bg-white/5 text-gray-400 rounded-xl hover:text-[#c9a961] transition-all border border-white/5">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="bg-black/40 p-4 rounded-2xl border border-[#222]">
+                                    <span class="text-[8px] font-black text-gray-600 uppercase block mb-1">Stay Class</span>
+                                    <span class="text-[10px] font-black text-white truncate block">${b.room_type}</span>
+                                </div>
+                                <div class="bg-black/40 p-4 rounded-2xl border border-[#222]">
+                                    <span class="text-[8px] font-black text-gray-600 uppercase block mb-1">Time Slot</span>
+                                    <span class="text-[10px] font-black text-white truncate block">${b.stay_type}</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between">
+                                <div class="flex flex-col">
+                                    <span class="text-[9px] font-black uppercase tracking-widest text-[#c9a961]">${b.payment_method || 'Cash'} Channel</span>
+                                    <button onclick="togglePayment('${b.id}', '${b.payment_status}')" class="text-[8px] font-black uppercase px-3 py-2 rounded-xl bg-[#c9a961]/10 text-[#c9a961] border border-[#c9a961]/20 mt-1">
+                                        ${b.payment_status === 'paid' ? '✓ Settlement Complete' : '⚠ Balance Pending'}
+                                    </button>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-[8px] font-black text-gray-600 uppercase">Amount Due</p>
+                                    <p class="text-3xl font-black text-[#c9a961] leading-none">Rs ${b.total_amount.toLocaleString()}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-3 mt-8 relative z-10">
+                            ${b.status === 'pending' ? `<button onclick="updateStatus('${b.id}', 'checked-in')" class="flex-1 py-4 btn-primary rounded-[20px] text-[10px] uppercase tracking-widest active:scale-95 transition-all">Grant Entry</button>` : ''}
+                            ${b.status === 'checked-in' ? `<button onclick="updateStatus('${b.id}', 'checked-out')" class="flex-1 py-4 border-2 border-[#c9a961] text-[#c9a961] rounded-[20px] text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all">Checkout</button>` : ''}
+                            ${b.status !== 'cancelled' && b.status !== 'checked-out' ? `<button onclick="cancelBooking('${b.id}')" class="px-5 bg-red-500/10 text-red-500 rounded-[20px] border border-red-500/20 hover:bg-red-500 hover:text-white transition-all">×</button>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ANALYSIS
+        function renderInsights() {
+            const valid = allBookings.filter(b => b.status !== 'cancelled');
+            const paidRev = valid.filter(b => b.payment_status === 'paid').reduce((s, b) => s + b.total_amount, 0);
+            const unpaidRev = valid.filter(b => b.payment_status !== 'paid').reduce((s, b) => s + b.total_amount, 0);
+            const active = allBookings.filter(b => b.check_in_date === selectedDate && (b.status === 'checked-in' || b.status === 'pending')).length;
+            const occ = Math.round((active / TOTAL_ROOMS) * 100);
+
+            document.getElementById('net-revenue').textContent = `Rs ${paidRev.toLocaleString()}`;
+            document.getElementById('pending-revenue').textContent = `Rs ${unpaidRev.toLocaleString()}`;
+            document.getElementById('snap-occ').textContent = `${occ}%`;
+            document.getElementById('snap-occ-bar').style.width = `${occ}%`;
+
+            const channels = ['Cash', 'Fonepay', 'Card'];
+            document.getElementById('payment-channel-list').innerHTML = channels.map(chan => {
+                const rev = allBookings.filter(b => b.payment_method === chan && b.payment_status === 'paid').reduce((s,b) => s + b.total_amount, 0);
+                const p = paidRev ? Math.round((rev / paidRev) * 100) : 0;
+                return `<div class="space-y-2"><div class="flex justify-between text-[9px] font-black uppercase tracking-widest"><span>${chan} Settlement</span><span>Rs ${rev.toLocaleString()} (${p}%)</span></div><div class="w-full bg-[#111] h-1.5 rounded-full overflow-hidden border border-[#222]"><div class="h-full bg-[#c9a961]" style="width: ${p}%"></div></div></div>`;
+            }).join('');
+
+            const types = ['Daycation', 'Staycation', 'Full Stay'];
+            document.getElementById('stay-type-distribution').innerHTML = types.map(t => {
+                const count = allBookings.filter(b => b.stay_type === t).length;
+                return `<div class="text-center p-6 bg-black rounded-[24px] border border-[#222]"><p class="text-[8px] font-black text-gray-600 uppercase mb-2">${t}</p><p class="text-3xl font-black text-white">${count}</p></div>`;
+            }).join('');
+        }
+
+        // FORM & MODAL LOGIC
+        window.updateStayConfig = (type) => {
+            document.getElementById('b-stay-type').value = type;
+            generateRoomSelection();
+            calculateTotal();
+        };
+
+        function generateRoomSelection() {
+            const list = document.getElementById('room-selection-list');
+            const stay = document.getElementById('b-stay-type').value;
+            const currentRoom = document.getElementById('b-room-type').value;
+
+            list.innerHTML = Object.entries(ROOM_DATA).map(([type, data]) => {
+                const price = data.prices[stay];
+                const checked = currentRoom === type ? 'checked' : '';
+                return `
+                    <label class="room-option block relative">
+                        <input type="radio" name="roomType" value="${type}" class="hidden" ${checked} onchange="setRoom('${type}')">
+                        <div class="room-card relative">
+                            <div class="h-28 overflow-hidden"><img src="${data.img}" class="w-full h-full object-cover opacity-60"></div>
+                            <div class="p-4 flex justify-between items-center">
+                                <div><h4 class="text-xs font-black text-[#c9a961] uppercase">${type}</h4><p class="text-[8px] text-gray-500">${data.desc}</p></div>
+                                <div class="bg-[#c9a961] text-black px-3 py-1 rounded-full text-[10px] font-black">Rs ${price}</div>
+                            </div>
+                        </div>
+                    </label>
+                `;
+            }).join('');
+        }
+
+        window.setRoom = (type) => {
+            document.getElementById('b-room-type').value = type;
+            const stay = document.getElementById('b-stay-type').value;
+            document.getElementById('b-base-price').value = ROOM_DATA[type].prices[stay];
+            calculateTotal();
+        };
+
+        window.applyDiscount = (p) => { document.getElementById('b-discount').value = p; calculateTotal(); };
+        
+        window.calculateTotal = () => {
+            const base = parseFloat(document.getElementById('b-base-price').value) || 0;
+            const disc = parseFloat(document.getElementById('b-discount').value) || 0;
+            const final = (base * 2) - ((base * 2) * (disc / 100)); // Snippet Logic: Total (2 People)
+            document.getElementById('b-amount').value = final;
+            document.getElementById('final-amount').textContent = `Rs ${Math.round(final).toLocaleString()}`;
+        };
+
+        window.openBookingModal = () => {
+            document.getElementById('booking-form').reset();
+            document.getElementById('editing-id').value = '';
+            document.getElementById('modal-title').textContent = 'New Reservation';
+            document.getElementById('b-date').value = selectedDate;
+            document.getElementById('b-stay-type').value = 'Daycation';
+            document.getElementById('b-room-type').value = 'Mini';
+            setRoom('Mini');
+            document.getElementById('booking-modal').classList.remove('hidden');
+            document.getElementById('booking-modal').classList.add('flex');
+        };
+
+        window.editBooking = (id) => {
+            const b = allBookings.find(x => x.id === id);
+            if (!b) return;
+            document.getElementById('editing-id').value = b.id;
+            document.getElementById('modal-title').textContent = 'Modify Stay';
+            document.getElementById('b-name').value = b.full_name;
+            document.getElementById('b-phone').value = b.phone_number;
+            document.getElementById('b-date').value = b.check_in_date;
+            document.getElementById('b-method').value = b.payment_method || 'Cash';
+            document.getElementById('b-pay-status').value = b.payment_status;
+            document.getElementById('b-status').value = b.status;
+            document.getElementById('b-discount').value = b.discount_percent;
+            document.getElementById('b-base-price').value = b.base_amount;
+            document.getElementById('b-stay-type').value = b.stay_type;
+            const rt = b.room_type.replace('Cozy ', '');
+            document.getElementById('b-room-type').value = rt;
+            
+            // Sync radio inputs
+            document.querySelectorAll('input[name="stayType"]').forEach(r => { if(r.value === b.stay_type) r.checked = true; });
+            generateRoomSelection();
+            calculateTotal();
+            
+            document.getElementById('booking-modal').classList.remove('hidden');
+            document.getElementById('booking-modal').classList.add('flex');
+        };
+
+        window.closeModals = () => {
+            document.querySelectorAll('.modal-blur').forEach(m => m.classList.add('hidden'));
+            if (qrScanner) { qrScanner.stop(); qrScanner = null; }
+        };
+
+        document.getElementById('booking-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('editing-id').value;
+            const payload = {
+                full_name: document.getElementById('b-name').value,
+                phone_number: document.getElementById('b-phone').value,
+                room_type: document.getElementById('b-room-type').value,
+                stay_type: document.getElementById('b-stay-type').value,
+                payment_method: document.getElementById('b-method').value,
+                payment_status: document.getElementById('b-pay-status').value,
+                check_in_date: document.getElementById('b-date').value,
+                base_amount: parseFloat(document.getElementById('b-base-price').value),
+                total_amount: parseFloat(document.getElementById('b-amount').value),
+                discount_percent: parseFloat(document.getElementById('b-discount').value),
+                status: document.getElementById('b-status').value
+            };
+            const res = id ? await supabase.from('bookings').update(payload).eq('id', id) : await supabase.from('bookings').insert([payload]);
+            if (!res.error) { closeModals(); loadData(); showToast(id ? 'Record Updated' : 'Stay Recorded'); }
+        });
+
+        // ACTIONS
+        window.updateStatus = async (id, status) => { const {error} = await supabase.from('bookings').update({status}).eq('id', id); if(!error) loadData(); };
+        window.cancelBooking = async (id) => { if(confirm("Discard this record?")) { await supabase.from('bookings').update({status:'cancelled'}).eq('id',id); loadData(); } };
+        window.togglePayment = async (id, cur) => { const next = cur === 'paid' ? 'unpaid' : 'paid'; await supabase.from('bookings').update({payment_status:next}).eq('id',id); loadData(); };
+
+        window.switchTab = (tab) => {
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('tab-active', 'text-white'));
+            const active = document.getElementById(`tab-${tab}`);
+            active.classList.add('tab-active');
+            document.getElementById('content-bookings').classList.toggle('hidden', tab !== 'bookings');
+            document.getElementById('content-insights').classList.toggle('hidden', tab !== 'insights');
+        };
+
+        window.filterBookings = (s) => {
+            currentFilter = s;
+            document.querySelectorAll('.filter-btn').forEach(b => { b.classList.remove('bg-[#c9a961]', 'text-black'); b.classList.add('text-gray-500'); });
+            document.getElementById(`filter-${s}`).classList.add('bg-[#c9a961]', 'text-black');
+            renderBookings();
+        };
+
+        function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.remove('hidden'); setTimeout(() => t.classList.add('hidden'), 2500); }
+
+        window.openQRScanner = () => {
+            document.getElementById('qr-scanner-modal').classList.remove('hidden').classList.add('flex');
+            qrScanner = new Html5Qrcode("qr-reader");
+            qrScanner.start({ facingMode: "environment" }, { fps: 15, qrbox: 280 }, (text) => {
+                const b = allBookings.find(x => x.id === text || x.phone_number === text);
+                if (b && b.status === 'pending') { updateStatus(b.id, 'checked-in'); showToast(`✓ ${b.full_name} Active`); closeModals(); }
+                else { showToast(b ? `Status: ${b.status}` : 'No Record'); closeModals(); }
+            }).catch(e => console.error(e));
+        };
+
+        checkSession();
+    </script>
 </body>
 </html>
