@@ -29,6 +29,11 @@
         .payment-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 700; }
         .paid { background: #d1f4e0; color: #0d894f; }
         .unpaid { background: #fee; color: #c41e3a; }
+        #date-selector {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+}
+
     </style>
 </head>
 <body class="antialiased">
@@ -81,6 +86,13 @@
                 <div class="bg-white rounded-2xl p-5 border border-gray-200">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-lg font-bold">Select Date</h3>
+                        <input type="date" 
+       onchange="selectDate(this.value)" 
+       class="text-sm border border-gray-200 rounded-lg px-3 py-2">
+
+   
+
+
                         <div class="text-sm text-gray-500" id="rooms-available">Rooms: <span class="font-bold text-black">—</span></div>
                     </div>
                     <div class="flex gap-3 overflow-x-auto pb-2" id="date-selector">
@@ -324,7 +336,7 @@
         let pendingCheckoutId = null;
         let qrScanner = null;
 
-        const TOTAL_ROOMS = 30;
+        const TOTAL_ROOMS = 7;
 
         // Auth
         document.getElementById('login-form').addEventListener('submit', async (e) => {
@@ -363,7 +375,7 @@
             const today = new Date();
             const dates = [];
             
-            for (let i = -1; i <= 7; i++) {
+            for (let i = -30; i <= 60; i++) {
                 const date = new Date(today);
                 date.setDate(today.getDate() + i);
                 dates.push(date);
@@ -385,7 +397,15 @@
             initializeDateSelector();
             updateRoomsAvailable();
             renderBookings();
+            updateDailyDashboard();
+
         };
+
+        setTimeout(() => {
+        const active = document.querySelector('.date-chip.active');
+        if (active) active.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+    }, 50);
+
 
         function updateRoomsAvailable() {
             const bookingsOnDate = allBookings.filter(b => 
@@ -408,7 +428,43 @@
             renderBookings();
             renderInsights();
             updateRoomsAvailable();
+            updateDailyDashboard();
+
         }
+
+        function updateDailyDashboard() {
+    const bookings = allBookings.filter(b =>
+        b.check_in_date === selectedDate &&
+        (b.status === 'pending' || b.status === 'checked-in')
+    );
+
+    const booked = bookings.length;
+    const available = Math.max(0, TOTAL_ROOMS - booked);
+    const occupancy = Math.round((booked / TOTAL_ROOMS) * 100);
+
+    document.getElementById('dash-total').textContent = TOTAL_ROOMS;
+    document.getElementById('dash-booked').textContent = booked;
+    document.getElementById('dash-available').textContent = available;
+    document.getElementById('dash-occupancy').textContent = `${occupancy}%`;
+
+    // Stay type count
+    const stayCounts = { "Full Stay": 0, "Daycation": 0, "Staycation": 0 };
+    bookings.forEach(b => stayCounts[b.stay_type] = (stayCounts[b.stay_type] || 0) + 1);
+
+    document.getElementById('dash-full').textContent = stayCounts["Full Stay"] || 0;
+    document.getElementById('dash-daycation').textContent = stayCounts["Daycation"] || 0;
+    document.getElementById('dash-staycation').textContent = stayCounts["Staycation"] || 0;
+
+    // Room type count
+    const roomCounts = { Mini: 0, Classic: 0, Deluxe: 0, Suite: 0 };
+    bookings.forEach(b => roomCounts[b.room_type] = (roomCounts[b.room_type] || 0) + 1);
+
+    document.getElementById('dash-mini').textContent = roomCounts.Mini;
+    document.getElementById('dash-classic').textContent = roomCounts.Classic;
+    document.getElementById('dash-deluxe').textContent = roomCounts.Deluxe;
+    document.getElementById('dash-suite').textContent = roomCounts.Suite;
+}
+
 
         // Render Bookings
         function renderBookings() {
