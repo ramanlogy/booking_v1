@@ -554,10 +554,14 @@
         <label>Phone Number</label>
         <input type="tel" id="input-phone" placeholder="98XXXXXXXX">
       </div>
-
-     <div class="form-group">
+<div class="form-group">
   <label>Upload Document (Citizenship/ID) <span style="color: #e74c3c;">*</span></label>
-  <input type="file" id="b-document" accept="image/*,.pdf" required>
+  <input 
+    type="file" 
+    id="b-document" 
+    accept="image/jpeg,image/jpg,image/png,image/heic,image/heif,application/pdf"
+    capture="environment"
+    required>
   <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Required: Upload citizenship or ID document</p>
 </div>
       <div class="summary-card">
@@ -1011,26 +1015,51 @@ document.getElementById('btn-confirm-booking').onclick = async () => {
     return;
   }
 
-  // Validate document upload (REQUIRED)
-  if(!docInput.files || docInput.files.length === 0) {
-    alert("Please upload your citizenship or ID document to continue.");
-    docInput.focus();
-    return;
-  }
+// Validate document upload (REQUIRED)
 
-  // Validate file size (max 5MB)
-  const maxSize = 5 * 1024 * 1024;
-  if(docInput.files[0].size > maxSize) {
-    alert("Document file size must be less than 5MB.");
-    return;
-  }
+if(!docInput.files || docInput.files.length === 0) {
+  alert("Please upload your citizenship or ID document to continue.");
+  docInput.focus();
+  return;
+}
 
-  // Validate file type
-  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf'];
-  if(!allowedTypes.includes(docInput.files[0].type)) {
-    alert("Please upload a valid document (JPG, PNG, or PDF only).");
+// Validate file size (max 5MB)
+const maxSize = 5 * 1024 * 1024;
+const file = docInput.files[0];
+
+if(file.size > maxSize) {
+  alert("Document file size must be less than 5MB.");
+  return;
+}
+
+// Validate file type - EXPANDED for iOS
+const allowedTypes = [
+  'image/jpeg', 
+  'image/jpg', 
+  'image/png', 
+  'image/webp',
+  'image/heic',  // iOS photos
+  'image/heif',  // iOS photos
+  'application/pdf'
+];
+
+// iOS sometimes reports empty type for HEIC files
+if(file.type && !allowedTypes.includes(file.type)) {
+  alert("Please upload a valid document (JPG, PNG, HEIC, or PDF only).");
+  return;
+}
+
+// Additional check: if type is empty, check file extension
+if(!file.type || file.type === '') {
+  const fileName = file.name.toLowerCase();
+  const validExtensions = ['.jpg', '.jpeg', '.png', '.heic', '.heif', '.pdf'];
+  const hasValidExtension = validExtensions.some(ext => fileName.endsWith(ext));
+  
+  if(!hasValidExtension) {
+    alert("Please upload a valid document (JPG, PNG, HEIC, or PDF only).");
     return;
   }
+}
 
   const btn = document.getElementById('btn-confirm-booking');
   btn.disabled = true;
