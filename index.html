@@ -555,12 +555,11 @@
         <input type="tel" id="input-phone" placeholder="98XXXXXXXX">
       </div>
 
-      <div class="form-group">
-        <label>Upload Document (Citizenship/ID)</label>
-        <input type="file" id="b-document" accept="image/*,.pdf">
-        <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Optional: Upload citizenship or ID document</p>
-      </div>
-
+     <div class="form-group">
+  <label>Upload Document (Citizenship/ID) <span style="color: #e74c3c;">*</span></label>
+  <input type="file" id="b-document" accept="image/*,.pdf" required>
+  <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Required: Upload citizenship or ID document</p>
+</div>
       <div class="summary-card">
         <label>Booking Summary</label>
         <div class="summary-row"><span>Stay:</span> <span id="summ-stay">-</span></div>
@@ -710,6 +709,7 @@
       state.time = timeInput.value;
     }
   });
+  
 
   // Date buttons
   const dateInput = document.getElementById('input-date');
@@ -760,6 +760,7 @@
       stopScanner();
     }
   }
+  
 
   // QR Scanner
   const startScanner = async () => {
@@ -998,112 +999,142 @@
     changeStep(3);
   };
 
-  // Step 3 -> 4: Confirm booking
-  document.getElementById('btn-confirm-booking').onclick = async () => {
-    const name = document.getElementById('input-name').value.trim();
-    const phone = document.getElementById('input-phone').value.trim();
+  /// Step 3 -> 4: Confirm booking
+document.getElementById('btn-confirm-booking').onclick = async () => {
+  const name = document.getElementById('input-name').value.trim();
+  const phone = document.getElementById('input-phone').value.trim();
+  const docInput = document.getElementById('b-document');
 
-    if(!name || phone.length < 10) {
-      alert("Please enter valid full name and phone number.");
-      return;
-    }
+  // Validate name and phone
+  if(!name || phone.length < 10) {
+    alert("Please enter valid full name and phone number.");
+    return;
+  }
 
-    const btn = document.getElementById('btn-confirm-booking');
-    btn.disabled = true;
-    btn.innerHTML = '<div class="loader"></div> Finalizing...';
+  // Validate document upload (REQUIRED)
+  if(!docInput.files || docInput.files.length === 0) {
+    alert("Please upload your citizenship or ID document to continue.");
+    docInput.focus();
+    return;
+  }
 
-    // Handle document upload using Supabase Storage
-    const docInput = document.getElementById('b-document');
-    let documentUrl = null;
+  // Validate file size (max 5MB)
+  const maxSize = 5 * 1024 * 1024;
+  if(docInput.files[0].size > maxSize) {
+    alert("Document file size must be less than 5MB.");
+    return;
+  }
 
-    if(docInput.files && docInput.files[0]) {
-      const file = docInput.files[0];
-      const fileName = `${Date.now()}_${file.name}`;
-      
-      try {
-        const { data, error } = await supabase.storage
-          .from('documents')
-          .upload(fileName, file);
-        
-        if (!error) {
-          const { data: urlData } = supabase.storage
-            .from('documents')
-            .getPublicUrl(fileName);
-          documentUrl = urlData.publicUrl;
-        } else {
-          console.error('Upload error:', error);
-        }
-      } catch (uploadErr) {
-        console.error('Upload exception:', uploadErr);
-      }
-    }
+  // Validate file type
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf'];
+  if(!allowedTypes.includes(docInput.files[0].type)) {
+    alert("Please upload a valid document (JPG, PNG, or PDF only).");
+    return;
+  }
 
-    const refToken = 'LMT-' + Math.random().toString(36).substr(2, 6).toUpperCase();
-    const payload = {
-      full_name: name,
-      phone_number: phone,
-      check_in_date: state.date,
-      arrival_time: state.time,
-      stay_type: state.stayType,
-      room_type: state.selectedRoom.name,
-      total_amount: state.selectedRoom.currentPrice * 2,
-      base_amount: state.selectedRoom.currentPrice * 2,
-      discount_percent: 0,
-      status: 'pending',
-      payment_status: 'unpaid',
-      qr_token: refToken,
-      document_url: documentUrl
-    };
+  const btn = document.getElementById('btn-confirm-booking');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="loader"></div> Finalizing...';
 
+  // Handle document upload using Supabase Storage
+  let documentUrl = null;
+
+  if(docInput.files && docInput.files[0]) {
+    const file = docInput.files[0];
+    const fileName = `${Date.now()}_${file.name}`;
+    
     try {
-      const resp = await fetch(CONFIG.URL, {
-        method: 'POST',
-        headers: { 
-          'apikey': CONFIG.KEY, 
-          'Authorization': `Bearer ${CONFIG.KEY}`, 
-          'Content-Type': 'application/json', 
-          'Prefer': 'return=representation' 
-        },
-        body: JSON.stringify(payload)
-      });
-      const data = await resp.json();
-      const confirmed = data[0];
-
-      // Build Ticket
-      document.getElementById('ticket-ref-id').innerText = confirmed.qr_token;
-      document.getElementById('ticket-data-grid').innerHTML = `
-        <div class="ticket-item"><span class="ticket-label">Guest</span><span class="ticket-val">${confirmed.full_name}</span></div>
-        <div class="ticket-item"><span class="ticket-label">Room</span><span class="ticket-val">${confirmed.room_type}</span></div>
-        <div class="ticket-item"><span class="ticket-label">Category</span><span class="ticket-val">${confirmed.stay_type}</span></div>
-        <div class="ticket-item"><span class="ticket-label">Schedule</span><span class="ticket-val">${confirmed.check_in_date} @ ${confirmed.arrival_time}</span></div>
-        <div class="ticket-item" style="margin-top:10px; border-top:1px dashed #ddd; padding-top:10px;">
-          <span class="ticket-label">Total Payable</span>
-          <span class="ticket-val" style="color:var(--primary-dark); font-size:16px;">Rs ${confirmed.total_amount}</span>
-        </div>
-      `;
-
-      // Generate QR Code
-      const qrTarget = document.getElementById('qrcode-display');
-      qrTarget.innerHTML = '';
-      setTimeout(() => {
-        new QRCode(qrTarget, {
-          text: confirmed.qr_token,
-          width: 150,
-          height: 150,
-          colorDark: "#000000",
-          colorLight: "#ffffff",
-          correctLevel: QRCode.CorrectLevel.H
-        });
-      }, 100);
-
-      changeStep(4);
-    } catch (e) {
-      alert("Booking failed. Please try again.");
-      console.error(e);
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .upload(fileName, file);
+      
+      if (!error) {
+        const { data: urlData } = supabase.storage
+          .from('documents')
+          .getPublicUrl(fileName);
+        documentUrl = urlData.publicUrl;
+      } else {
+        console.error('Upload error:', error);
+        alert("Error uploading document. Please try again.");
+        btn.disabled = false;
+        btn.innerHTML = 'Confirm & Book Now';
+        return;
+      }
+    } catch (uploadErr) {
+      console.error('Upload exception:', uploadErr);
+      alert("Error uploading document. Please try again.");
       btn.disabled = false;
       btn.innerHTML = 'Confirm & Book Now';
+      return;
     }
+  }
+
+  const refToken = 'LMT-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+  const payload = {
+    full_name: name,
+    phone_number: phone,
+    check_in_date: state.date,
+    arrival_time: state.time,
+    stay_type: state.stayType,
+    room_type: state.selectedRoom.name,
+    total_amount: state.selectedRoom.currentPrice * 2,
+    base_amount: state.selectedRoom.currentPrice * 2,
+    discount_percent: 0,
+    status: 'pending',
+    payment_status: 'unpaid',
+    qr_token: refToken,
+    document_url: documentUrl
   };
+
+  try {
+    const resp = await fetch(CONFIG.URL, {
+      method: 'POST',
+      headers: { 
+        'apikey': CONFIG.KEY, 
+        'Authorization': `Bearer ${CONFIG.KEY}`, 
+        'Content-Type': 'application/json', 
+        'Prefer': 'return=representation' 
+      },
+      body: JSON.stringify(payload)
+    });
+    const data = await resp.json();
+    const confirmed = data[0];
+
+    // Build Ticket
+    document.getElementById('ticket-ref-id').innerText = confirmed.qr_token;
+    document.getElementById('ticket-data-grid').innerHTML = `
+      <div class="ticket-item"><span class="ticket-label">Guest</span><span class="ticket-val">${confirmed.full_name}</span></div>
+      <div class="ticket-item"><span class="ticket-label">Room</span><span class="ticket-val">${confirmed.room_type}</span></div>
+      <div class="ticket-item"><span class="ticket-label">Category</span><span class="ticket-val">${confirmed.stay_type}</span></div>
+      <div class="ticket-item"><span class="ticket-label">Schedule</span><span class="ticket-val">${confirmed.check_in_date} @ ${confirmed.arrival_time}</span></div>
+      <div class="ticket-item" style="margin-top:10px; border-top:1px dashed #ddd; padding-top:10px;">
+        <span class="ticket-label">Total Payable</span>
+        <span class="ticket-val" style="color:var(--primary-dark); font-size:16px;">Rs ${confirmed.total_amount}</span>
+      </div>
+    `;
+
+    // Generate QR Code
+    const qrTarget = document.getElementById('qrcode-display');
+    qrTarget.innerHTML = '';
+    setTimeout(() => {
+      new QRCode(qrTarget, {
+        text: confirmed.qr_token,
+        width: 150,
+        height: 150,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+    }, 100);
+
+    changeStep(4);
+  } catch (e) {
+    alert("Booking failed. Please try again.");
+    console.error(e);
+    btn.disabled = false;
+    btn.innerHTML = 'Confirm & Book Now';
+  }
+};
 
   // Download ticket
   document.getElementById('btn-download-ticket').onclick = () => {
