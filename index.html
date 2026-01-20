@@ -6,7 +6,7 @@
   <title>Hotel Lumanti - Heritage & Modernity</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <!-- Library for QR Scanning -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -94,7 +94,6 @@
       margin-top: 5px;
     }
 
-    /* Stepper UI */
     .stepper {
       display: flex;
       justify-content: center;
@@ -116,7 +115,6 @@
       box-shadow: 0 0 12px var(--primary);
     }
 
-    /* Views */
     .view {
       display: none;
       animation: fadeIn 0.4s ease-out;
@@ -179,7 +177,6 @@
       box-shadow: 0 0 0 1px var(--primary);
     }
 
-    /* Stay Grid */
     .stay-grid {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
@@ -196,15 +193,27 @@
       transition: var(--transition);
     }
 
+    .stay-item:hover {
+      border-color: var(--primary);
+      background-color: rgba(201, 169, 97, 0.1);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(201, 169, 97, 0.15);
+    }
+
     .stay-item.active {
       border-color: var(--primary);
-      background: rgba(201, 169, 97, 0.1);
+      background: var(--primary);
+      color: white;
+    }
+
+    .stay-item.active h4,
+    .stay-item.active p {
+      color: white;
     }
 
     .stay-item h4 { font-size: 12px; color: var(--primary); margin-bottom: 4px; }
     .stay-item p { font-size: 10px; color: var(--text-muted); }
 
-    /* Room Cards */
     .room-list {
       display: grid;
       gap: 15px;
@@ -255,7 +264,7 @@
     }
 
     .avail-status {
-      font-size: 10px;
+      font-size: 16px;
       font-weight: 700;
       margin-top: 5px;
     }
@@ -263,7 +272,6 @@
     .avail-true { color: var(--success); }
     .avail-false { color: var(--error); }
 
-    /* Buttons */
     .btn {
       width: 100%;
       padding: 16px;
@@ -286,7 +294,6 @@
     .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-light); margin-top: 12px; }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* Summary Card */
     .summary-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
@@ -311,7 +318,6 @@
       font-size: 16px;
     }
 
-    /* Ticket */
     .ticket-container {
       background: #fff;
       color: #000;
@@ -355,7 +361,6 @@
     .ticket-label { color: #888; }
     .ticket-val { font-weight: 700; }
 
-    /* Reception Mode */
     .reception-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
@@ -421,8 +426,40 @@
       display: none;
     }
 
-    #btn-start-scanner {
-      margin-bottom: 15px;
+    .arrow {
+      font-weight: 800;
+      font-size: 24px;
+      margin-left: 4px;
+    }
+
+    .date-btn {
+      padding: 10px 16px;
+      border: 1.5px solid #c9a961;
+      border-radius: 8px;
+      background: #fff;
+      color: #4a4a4a;
+      cursor: pointer;
+      font-weight: 600;
+      user-select: none;
+      transition: background-color 0.2s, color 0.2s;
+      margin-bottom: 10px;
+      margin-right: 10px;
+    }
+
+    .date-btn:hover {
+      background-color: #c9a961;
+      color: #000;
+    }
+
+    .date-btn.active {
+      background-color: #c9a961;
+      color: #000;
+      border-color: #a88b4d;
+    }
+
+    input[type="file"] {
+      font-size: 13px;
+      padding: 10px;
     }
   </style>
 </head>
@@ -435,7 +472,7 @@
   </div>
 
   <header>
-    <h1>Lumanti</h1>
+    <h1>Lumanti Hotel</h1>
     <p>Heritage Hospitality</p>
   </header>
 
@@ -451,37 +488,43 @@
     <!-- Step 1: When & What Type -->
     <div class="view active" id="view-step-1">
       <h2>1. Stay Details</h2>
-      <div class="form-group">
-        <label>Category</label>
-        <div class="stay-grid">
-          <div class="stay-item active" data-stay="Daycation" data-start="11:00" data-end="17:00">
-            <h4>Daycation</h4>
-            <p>11AM - 5PM</p>
-          </div>
-          <div class="stay-item" data-stay="Staycation" data-start="19:00" data-end="23:59">
-            <h4>Staycation</h4>
-            <p>7PM Onwards</p>
-          </div>
-          <div class="stay-item" data-stay="Full Stay" data-start="11:00" data-end="23:59">
-            <h4>Full Stay</h4>
-            <p>24h Stay</p>
-          </div>
-        </div>
-      </div>
 
       <div class="form-group">
-        <label>Reservation Date</label>
+        <label>When are you coming?</label>
+        <button type="button" class="date-btn" data-date="today">Today</button>
+        <button type="button" class="date-btn" data-date="tomorrow">Tomorrow</button>
         <input type="date" id="input-date">
       </div>
 
       <div class="form-group">
-        <label>Expected Arrival Time</label>
+        <label>Which Time?</label>
+        <div class="stay-grid">
+          <label class="stay-item" data-stay="Daycation" data-start="11:00" data-end="17:00">
+            <input type="radio" name="stay-time" value="Daycation" hidden>
+            <h4>Daycation</h4>
+            <p>12AM - 5PM</p>
+          </label>
+          <label class="stay-item" data-stay="Staycation" data-start="19:00" data-end="23:59">
+            <input type="radio" name="stay-time" value="Staycation" hidden>
+            <h4>Staycation</h4>
+            <p>7PM Onwards</p>
+          </label>
+          <label class="stay-item" data-stay="Full Stay" data-start="11:00" data-end="23:59">
+            <input type="radio" name="stay-time" value="Full Stay" hidden>
+            <h4>Full Stay</h4>
+            <p>24h Stay</p>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group" id="arrival-group" style="display:none;">
+        <label id="arrival-label">Starts From</label>
         <input type="time" id="input-time">
-        <div class="error-toast" id="time-error">Arrival time must be within stay window.</div>
+        <div class="error-toast" id="time-error">You should come after time starts.</div>
       </div>
 
       <button class="btn btn-gold" id="btn-to-step-2">
-        <span id="txt-check-avail">Check Availability</span>
+        <span id="txt-check-avail">Check Availability <span class="arrow">→</span></span>
         <div class="loader" id="loader-check-avail" style="display:none;"></div>
       </button>
     </div>
@@ -489,21 +532,15 @@
     <!-- Step 2: Room Selection -->
     <div class="view" id="view-step-2">
       <h2>2. Select Your Room</h2>
-      <div class="room-list" id="room-list-container">
-        <!-- Rendered via JS -->
-      </div>
+      <div class="room-list" id="room-list-container"></div>
       
       <button class="btn btn-gold" id="btn-to-step-3" disabled style="margin-top:15px;">Continue to Details</button>
-      <button class="btn btn-outline" onclick="changeStep(2)">
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" 
-       viewBox="0 0 24 24" fill="none" stroke="currentColor" 
-       stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-       style="margin-right:6px;">
-    <path d="M15 18l-6-6 6-6"></path>
-  </svg>
-  Back
-</button>
-
+      <button class="btn btn-outline" onclick="changeStep(1)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;">
+          <path d="M15 18l-6-6 6-6"></path>
+        </svg>
+        Back
+      </button>
     </div>
 
     <!-- Step 3: Guest Details -->
@@ -518,6 +555,12 @@
         <input type="tel" id="input-phone" placeholder="98XXXXXXXX">
       </div>
 
+      <div class="form-group">
+        <label>Upload Document (Citizenship/ID)</label>
+        <input type="file" id="b-document" accept="image/*,.pdf">
+        <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Optional: Upload citizenship or ID document</p>
+      </div>
+
       <div class="summary-card">
         <label>Booking Summary</label>
         <div class="summary-row"><span>Stay:</span> <span id="summ-stay">-</span></div>
@@ -530,34 +573,27 @@
         </div>
       </div>
 
-      
       <button class="btn btn-gold" id="btn-confirm-booking" style="margin-top:15px;">Confirm & Book Now</button>
-     <button class="btn btn-outline" onclick="changeStep(2)">
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" 
-       viewBox="0 0 24 24" fill="none" stroke="currentColor" 
-       stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-       style="margin-right:6px;">
-    <path d="M15 18l-6-6 6-6"></path>
-  </svg>
-  Back
-</button>
-
+      <button class="btn btn-outline" onclick="changeStep(2)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;">
+          <path d="M15 18l-6-6 6-6"></path>
+        </svg>
+        Back
+      </button>
     </div>
 
     <!-- Step 4: Success Ticket -->
     <div class="view" id="view-step-4">
       <div style="text-align:center; margin-bottom: 20px;">
         <h2 style="border:none; padding:0; display:inline-block;">Success!</h2>
-        <p style="color:var(--success); font-weight:600; font-size: 13px;">Your reservation is confirmed.</p>
+        <p style="color:var(--success); font-weight:600; font-size: 13px;">Reservation confirmed<br>Show the QR code at reception</p>
       </div>
 
       <div id="capture-ticket" class="ticket-container">
         <div class="ticket-head">LUMANTI HERITAGE</div>
         <div class="ticket-body">
           <div id="qrcode-display"></div>
-          <div class="ticket-grid" id="ticket-data-grid">
-            <!-- Rendered via JS -->
-          </div>
+          <div class="ticket-grid" id="ticket-data-grid"></div>
           <p style="font-size:10px; color:#999; margin-top:20px; font-weight:700;">#<span id="ticket-ref-id"></span></p>
         </div>
       </div>
@@ -573,7 +609,6 @@
       <div class="form-group" style="text-align:center;">
         <label>Reception Terminal: Scan QR Code</label>
         
-        <!-- Scanner Area -->
         <div id="reader"></div>
         <button class="btn btn-gold" id="btn-start-scanner">Open Scanner</button>
 
@@ -606,22 +641,26 @@
 </div>
 
 <script>
+  const SUPABASE_URL = 'https://fzwnglhxtmtltpysdzma.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6d25nbGh4dG10bHRweXNkem1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1ODE0MzAsImV4cCI6MjA4NDE1NzQzMH0.PuES2nphqkKU-FqzBge6LlptVibSfeTQcUExEdfTleg';
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
   const CONFIG = {
     URL: 'https://fzwnglhxtmtltpysdzma.supabase.co/rest/v1/bookings',
     KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6d25nbGh4dG10bHRweXNkem1hIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2ODU4MTQzMCwiZXhwIjoyMDg0MTU3NDMwfQ.Ok0ZxnIHJnsvM2D67BiNoe84VnCqaV_Tz61Zl73nuRw'
   };
 
   const ROOMS = [
-    { id: 'mini', name: 'Mini ', cap: 4, basePrice: 499, img: 'assets/mini.png', desc: 'A small, cozy room with a fan and attached bathroom' },
-    { id: 'deluxe', name: 'Deluxe ', cap: 3, basePrice: 549, img: 'assets/deluxe.png', desc: 'A medium-sized fan-cooled room with poetic charm' },
-    { id: 'classic', name: 'Classic ', cap: 2, basePrice: 599, img: 'assets/classic.png', desc: 'A spacious fan-cooled room with street and temple views' },
-    { id: 'suite', name: ' Suite (AC)', cap: 2, basePrice: 749, img: 'assets/suite.png', desc: 'Air-conditioned comfort with a small private balcony' }
+    { id: 'mini', name: 'Mini', cap: 4, basePrice: 499, img: 'assets/mini.png', desc: 'A small, cozy room with a fan and attached bathroom' },
+    { id: 'deluxe', name: 'Deluxe', cap: 3, basePrice: 549, img: 'assets/deluxe.png', desc: 'A medium-sized fan-cooled room with poetic charm' },
+    { id: 'classic', name: 'Classic', cap: 2, basePrice: 599, img: 'assets/classic.png', desc: 'A spacious fan-cooled room with street and temple views' },
+    { id: 'suite', name: 'Suite', cap: 2, basePrice: 749, img: 'assets/suite.png', desc: 'Air-conditioned comfort with a small private balcony' }
   ];
 
   let state = {
     step: 1,
     mode: 'booking',
-    stayType: 'Daycation',
+    stayType: null,
     date: new Date().toISOString().split('T')[0],
     time: '12:00',
     selectedRoom: null,
@@ -629,13 +668,83 @@
   };
 
   let html5QrCode = null;
+  let scannedBooking = null;
 
-  // Setup Defaults
-  document.getElementById('input-date').value = state.date;
-  document.getElementById('input-date').min = state.date;
-  document.getElementById('input-time').value = state.time;
+  // Stay item selection
+  const stayItems = document.querySelectorAll('.stay-item');
+  const arrivalGroup = document.getElementById('arrival-group');
+  const timeInput = document.getElementById('input-time');
+  const arrivalLabel = document.getElementById('arrival-label');
+  const errorToast = document.getElementById('time-error');
 
-  // Nav Switcher
+  arrivalGroup.style.display = 'none';
+
+  stayItems.forEach(item => {
+    item.addEventListener('click', () => {
+      stayItems.forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+
+      const stay = item.dataset.stay;
+      const start = item.dataset.start;
+      const end = item.dataset.end;
+
+      state.stayType = stay;
+      arrivalGroup.style.display = 'block';
+      arrivalLabel.textContent = `${stay} starts from ${start}`;
+
+      timeInput.min = start;
+      timeInput.max = end;
+      timeInput.value = start;
+      state.time = start;
+
+      errorToast.style.display = 'none';
+    });
+  });
+
+  timeInput.addEventListener('change', () => {
+    if (timeInput.value < timeInput.min || timeInput.value > timeInput.max) {
+      errorToast.style.display = 'block';
+      timeInput.value = timeInput.min;
+    } else {
+      errorToast.style.display = 'none';
+      state.time = timeInput.value;
+    }
+  });
+
+  // Date buttons
+  const dateInput = document.getElementById('input-date');
+  const dateButtons = document.querySelectorAll('.date-btn');
+
+  dateButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      dateButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      
+      const today = new Date();
+      let selectedDate;
+      
+      if (btn.dataset.date === 'today') {
+        selectedDate = today.toISOString().split('T')[0];
+      } else if (btn.dataset.date === 'tomorrow') {
+        today.setDate(today.getDate() + 1);
+        selectedDate = today.toISOString().split('T')[0];
+      }
+      
+      if (selectedDate) {
+        dateInput.value = selectedDate;
+        state.date = selectedDate;
+      }
+    });
+  });
+
+  dateInput.value = state.date;
+  dateInput.min = state.date;
+  dateInput.addEventListener('change', (e) => {
+    state.date = e.target.value;
+    dateButtons.forEach(b => b.classList.remove('active'));
+  });
+
+  // Mode switcher
   document.getElementById('btn-mode-booking').onclick = () => switchMode('booking');
   document.getElementById('btn-mode-reception').onclick = () => switchMode('reception');
 
@@ -652,7 +761,7 @@
     }
   }
 
-  // Scanner Logic
+  // QR Scanner
   const startScanner = async () => {
     html5QrCode = new Html5Qrcode("reader");
     const config = { fps: 10, qrbox: { width: 250, height: 250 } };
@@ -665,14 +774,11 @@
         { facingMode: "environment" },
         config,
         (decodedText) => {
-          // On Success
           document.getElementById('reception-scan-input').value = decodedText;
           lookupBooking(decodedText);
           stopScanner();
         },
-        (errorMessage) => {
-          // console.log("Scanning...");
-        }
+        (errorMessage) => {}
       );
     } catch (err) {
       alert("Error accessing camera: " + err);
@@ -691,7 +797,7 @@
 
   document.getElementById('btn-start-scanner').onclick = startScanner;
 
-  // Lookup Logic
+  // Lookup booking
   const lookupBooking = async (token) => {
     try {
       const resp = await fetch(`${CONFIG.URL}?qr_token=eq.${token}`, {
@@ -700,45 +806,83 @@
       const data = await resp.json();
       
       if(data && data.length > 0) {
+        scannedBooking = data[0];
         showGuestPreview(data[0]);
         document.getElementById('scan-error').style.display = 'none';
       } else {
         document.getElementById('scan-error').style.display = 'block';
         document.getElementById('guest-preview-pane').style.display = 'none';
       }
-    } catch(e) { console.error(e); }
+    } catch(e) { 
+      console.error(e); 
+    }
   };
 
-  // Step 1: Category Logic
-  document.querySelectorAll('.stay-item').forEach(item => {
-    item.onclick = () => {
-      document.querySelectorAll('.stay-item').forEach(i => i.classList.remove('active'));
-      item.classList.add('active');
-      state.stayType = item.dataset.stay;
-      
-      const timeInput = document.getElementById('input-time');
-      if(timeInput.value < item.dataset.start || timeInput.value > item.dataset.end) {
-        timeInput.value = item.dataset.start;
-      }
-      validateTime();
-    };
-  });
+  function showGuestPreview(b) {
+    document.getElementById('prev-guest-name').innerText = b.full_name;
+    document.getElementById('prev-guest-ref').innerText = 'Ref: ' + b.qr_token;
+    document.getElementById('prev-stay-type').innerText = b.stay_type;
+    document.getElementById('prev-room-type').innerText = b.room_type;
+    document.getElementById('prev-checkin-time').innerText = b.check_in_date + ' @ ' + b.arrival_time;
+    document.getElementById('prev-phone').innerText = b.phone_number;
+    document.getElementById('prev-amount').innerText = 'Rs ' + b.total_amount;
+    
+    const status = document.getElementById('prev-guest-status');
+    status.innerText = b.status.replace('_', ' ').replace('-', ' ');
+    status.className = `status-pill status-${b.status.replace('_', '-')}`;
 
-  const validateTime = () => {
-    const t = document.getElementById('input-time').value;
-    const active = document.querySelector('.stay-item.active');
-    const start = active.dataset.start;
-    const end = active.dataset.end;
-    const isValid = t >= start && t <= end;
-    document.getElementById('time-error').style.display = isValid ? 'none' : 'block';
-    state.time = t;
-    return isValid;
+    const checkInBtn = document.getElementById('btn-reception-checkin');
+    if(b.status === 'checked-in') {
+      checkInBtn.disabled = true;
+      checkInBtn.innerText = 'Guest Already Checked In';
+    } else {
+      checkInBtn.disabled = false;
+      checkInBtn.innerText = 'Confirm Check-In';
+    }
+
+    document.getElementById('guest-preview-pane').style.display = 'block';
+  }
+
+  const scanInput = document.getElementById('reception-scan-input');
+  scanInput.oninput = async (e) => {
+    const val = e.target.value.trim();
+    if(val.length < 8) {
+      document.getElementById('guest-preview-pane').style.display = 'none';
+      return;
+    }
+    lookupBooking(val);
   };
 
-  document.getElementById('input-time').oninput = validateTime;
-  document.getElementById('input-date').onchange = (e) => state.date = e.target.value;
+  document.getElementById('btn-reception-checkin').onclick = async () => {
+    if(!scannedBooking) return;
+    const btn = document.getElementById('btn-reception-checkin');
+    btn.disabled = true;
+    btn.innerText = 'Updating...';
 
-  // Step Change Function
+    try {
+      const resp = await fetch(`${CONFIG.URL}?id=eq.${scannedBooking.id}`, {
+        method: 'PATCH',
+        headers: { 
+          'apikey': CONFIG.KEY, 
+          'Authorization': `Bearer ${CONFIG.KEY}`, 
+          'Content-Type': 'application/json', 
+          'Prefer': 'return=representation' 
+        },
+        body: JSON.stringify({ status: 'checked-in' })
+      });
+      const data = await resp.json();
+      scannedBooking = data[0];
+      showGuestPreview(data[0]);
+      alert("Check-in successful!");
+      scanInput.value = '';
+    } catch(e) {
+      alert("Error updating check-in status.");
+      btn.disabled = false;
+      btn.innerText = 'Confirm Check-In';
+    }
+  };
+
+  // Step navigation
   function changeStep(n) {
     state.step = n;
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -748,8 +892,24 @@
     window.scrollTo(0, 0);
   }
 
-  // Step 1 -> 2
+  const validateTime = () => {
+    const t = timeInput.value;
+    const active = document.querySelector('.stay-item.active');
+    if (!active) return false;
+    const start = active.dataset.start;
+    const end = active.dataset.end;
+    const isValid = t >= start && t <= end;
+    errorToast.style.display = isValid ? 'none' : 'block';
+    state.time = t;
+    return isValid;
+  };
+
+  // Step 1 -> 2: Check availability
   document.getElementById('btn-to-step-2').onclick = async () => {
+    if(!state.stayType) {
+      alert('Please select a stay type');
+      return;
+    }
     if(!validateTime()) return;
 
     const btn = document.getElementById('btn-to-step-2');
@@ -761,7 +921,7 @@
     ldr.style.display = 'block';
 
     try {
-      const resp = await fetch(`${CONFIG.URL}?check_in_date=eq.${state.date}&stay_type=eq.${state.stayType}`, {
+      const resp = await fetch(`${CONFIG.URL}?check_in_date=eq.${state.date}&stay_type=eq.${state.stayType}&select=room_type`, {
         headers: { apikey: CONFIG.KEY, Authorization: `Bearer ${CONFIG.KEY}` }
       });
       const data = await resp.json();
@@ -776,6 +936,7 @@
       changeStep(2);
     } catch (e) {
       alert("Error checking availability. Check connection.");
+      console.error(e);
     } finally {
       btn.disabled = false;
       txt.style.display = 'inline';
@@ -837,16 +998,45 @@
     changeStep(3);
   };
 
-  // Step 3 -> 4 (Confirm)
+  // Step 3 -> 4: Confirm booking
   document.getElementById('btn-confirm-booking').onclick = async () => {
     const name = document.getElementById('input-name').value.trim();
     const phone = document.getElementById('input-phone').value.trim();
 
-    if(!name || phone.length < 10) return alert("Please enter valid full name and phone number.");
+    if(!name || phone.length < 10) {
+      alert("Please enter valid full name and phone number.");
+      return;
+    }
 
     const btn = document.getElementById('btn-confirm-booking');
     btn.disabled = true;
     btn.innerHTML = '<div class="loader"></div> Finalizing...';
+
+    // Handle document upload using Supabase Storage
+    const docInput = document.getElementById('b-document');
+    let documentUrl = null;
+
+    if(docInput.files && docInput.files[0]) {
+      const file = docInput.files[0];
+      const fileName = `${Date.now()}_${file.name}`;
+      
+      try {
+        const { data, error } = await supabase.storage
+          .from('documents')
+          .upload(fileName, file);
+        
+        if (!error) {
+          const { data: urlData } = supabase.storage
+            .from('documents')
+            .getPublicUrl(fileName);
+          documentUrl = urlData.publicUrl;
+        } else {
+          console.error('Upload error:', error);
+        }
+      } catch (uploadErr) {
+        console.error('Upload exception:', uploadErr);
+      }
+    }
 
     const refToken = 'LMT-' + Math.random().toString(36).substr(2, 6).toUpperCase();
     const payload = {
@@ -857,16 +1047,22 @@
       stay_type: state.stayType,
       room_type: state.selectedRoom.name,
       total_amount: state.selectedRoom.currentPrice * 2,
-      status: 'confirmed',
-      qr_token: refToken
+      base_amount: state.selectedRoom.currentPrice * 2,
+      discount_percent: 0,
+      status: 'pending',
+      payment_status: 'unpaid',
+      qr_token: refToken,
+      document_url: documentUrl
     };
 
     try {
       const resp = await fetch(CONFIG.URL, {
         method: 'POST',
         headers: { 
-          'apikey': CONFIG.KEY, 'Authorization': `Bearer ${CONFIG.KEY}`, 
-          'Content-Type': 'application/json', 'Prefer': 'return=representation' 
+          'apikey': CONFIG.KEY, 
+          'Authorization': `Bearer ${CONFIG.KEY}`, 
+          'Content-Type': 'application/json', 
+          'Prefer': 'return=representation' 
         },
         body: JSON.stringify(payload)
       });
@@ -886,7 +1082,7 @@
         </div>
       `;
 
-      // QR Code
+      // Generate QR Code
       const qrTarget = document.getElementById('qrcode-display');
       qrTarget.innerHTML = '';
       setTimeout(() => {
@@ -903,12 +1099,13 @@
       changeStep(4);
     } catch (e) {
       alert("Booking failed. Please try again.");
+      console.error(e);
       btn.disabled = false;
       btn.innerHTML = 'Confirm & Book Now';
     }
   };
 
-  // Ticket Capture
+  // Download ticket
   document.getElementById('btn-download-ticket').onclick = () => {
     html2canvas(document.getElementById('capture-ticket'), { scale: 3 }).then(canvas => {
       const a = document.createElement('a');
@@ -916,70 +1113,6 @@
       a.href = canvas.toDataURL();
       a.click();
     });
-  };
-
-  // RECEPTION LOGIC
-  const scanInput = document.getElementById('reception-scan-input');
-  let scannedBooking = null;
-
-  scanInput.oninput = async (e) => {
-    const val = e.target.value.trim();
-    if(val.length < 8) {
-      document.getElementById('guest-preview-pane').style.display = 'none';
-      return;
-    }
-    lookupBooking(val);
-  };
-
-  function showGuestPreview(b) {
-    document.getElementById('prev-guest-name').innerText = b.full_name;
-    document.getElementById('prev-guest-ref').innerText = 'Ref: ' + b.qr_token;
-    document.getElementById('prev-stay-type').innerText = b.stay_type;
-    document.getElementById('prev-room-type').innerText = b.room_type;
-    document.getElementById('prev-checkin-time').innerText = b.check_in_date + ' @ ' + b.arrival_time;
-    document.getElementById('prev-phone').innerText = b.phone_number;
-    document.getElementById('prev-amount').innerText = 'Rs ' + b.total_amount;
-    
-    const status = document.getElementById('prev-guest-status');
-    status.innerText = b.status.replace('_', ' ');
-    status.className = `status-pill status-${b.status.replace('_', '-')}`;
-
-    const checkInBtn = document.getElementById('btn-reception-checkin');
-    if(b.status === 'checked_in') {
-      checkInBtn.disabled = true;
-      checkInBtn.innerText = 'Guest Already Checked In';
-    } else {
-      checkInBtn.disabled = false;
-      checkInBtn.innerText = 'Confirm Check-In';
-    }
-
-    document.getElementById('guest-preview-pane').style.display = 'block';
-  }
-
-  document.getElementById('btn-reception-checkin').onclick = async () => {
-    if(!scannedBooking) return;
-    const btn = document.getElementById('btn-reception-checkin');
-    btn.disabled = true;
-    btn.innerText = 'Updating...';
-
-    try {
-      const resp = await fetch(`${CONFIG.URL}?id=eq.${scannedBooking.id}`, {
-        method: 'PATCH',
-        headers: { 
-          'apikey': CONFIG.KEY, 'Authorization': `Bearer ${CONFIG.KEY}`, 
-          'Content-Type': 'application/json', 'Prefer': 'return=representation' 
-        },
-        body: JSON.stringify({ status: 'checked_in' })
-      });
-      const data = await resp.json();
-      showGuestPreview(data[0]);
-      alert("Check-in successful!");
-      scanInput.value = '';
-    } catch(e) {
-      alert("Error updating check-in status.");
-      btn.disabled = false;
-      btn.innerText = 'Confirm Check-In';
-    }
   };
 </script>
 
