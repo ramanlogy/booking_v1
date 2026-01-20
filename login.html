@@ -29,11 +29,12 @@
         .payment-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 700; }
         .paid { background: #d1f4e0; color: #0d894f; }
         .unpaid { background: #fee; color: #c41e3a; }
-        #date-selector {
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;
-}
-
+        #date-selector { scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
+        @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .notification { animation: slideIn 0.3s ease-out; }
+        .timeline-item { position: relative; padding-left: 30px; }
+        .timeline-item::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: #e5e7eb; }
+        .timeline-dot { position: absolute; left: -4px; top: 8px; width: 10px; height: 10px; border-radius: 50%; background: #c9a961; border: 2px solid white; }
     </style>
 </head>
 <body class="antialiased">
@@ -63,6 +64,10 @@
                     <h2 class="text-3xl font-black text-[#c9a961] tracking-tighter">Lumanti</h2>
                     <nav class="hidden md:flex gap-6">
                         <button onclick="switchTab('bookings')" class="nav-tab pb-2 text-gray-400 hover:text-black font-semibold transition-all tab-active" id="tab-bookings">Bookings</button>
+                        <button onclick="switchTab('latest')" class="nav-tab pb-2 text-gray-400 hover:text-black font-semibold transition-all" id="tab-latest">
+                            Latest
+                            <span id="new-bookings-badge" class="hidden ml-2 px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">0</span>
+                        </button>
                         <button onclick="switchTab('insights')" class="nav-tab pb-2 text-gray-400 hover:text-black font-semibold transition-all" id="tab-insights">Insights</button>
                     </nav>
                 </div>
@@ -78,26 +83,99 @@
             </div>
         </header>
 
+        <!-- Real-time Notifications -->
+        <div id="notification-container" class="fixed top-20 right-6 z-50 space-y-3 max-w-sm"></div>
+
         <main class="max-w-7xl mx-auto p-6 space-y-8">
             
             <!-- Bookings Section -->
             <section id="content-bookings" class="space-y-6">
+                <!-- Daily Dashboard Overview -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="bg-gradient-to-br from-[#c9a961] to-[#b39452] text-white rounded-2xl p-5">
+                        <p class="text-xs font-bold opacity-80 uppercase tracking-wider mb-2">Total Rooms</p>
+                        <p class="text-4xl font-black mb-1" id="dash-total">7</p>
+                        <p class="text-xs opacity-80">Capacity</p>
+                    </div>
+                    <div class="bg-white rounded-2xl p-5 border-2 border-emerald-500">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Booked</p>
+                        <p class="text-4xl font-black text-emerald-600 mb-1" id="dash-booked">0</p>
+                        <p class="text-xs text-gray-400">Active bookings</p>
+                    </div>
+                    <div class="bg-white rounded-2xl p-5 border-2 border-blue-500">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Available</p>
+                        <p class="text-4xl font-black text-blue-600 mb-1" id="dash-available">7</p>
+                        <p class="text-xs text-gray-400">Rooms left</p>
+                    </div>
+                    <div class="bg-white rounded-2xl p-5 border-2 border-amber-500">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Occupancy</p>
+                        <p class="text-4xl font-black text-amber-600 mb-1" id="dash-occupancy">0%</p>
+                        <div class="w-full bg-gray-100 rounded-full h-2 mt-2">
+                            <div class="bg-amber-500 h-full rounded-full transition-all duration-500" id="dash-occupancy-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stay Type & Room Type Breakdown -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-white rounded-2xl p-5 border border-gray-200">
+                        <p class="text-sm font-bold mb-4 text-gray-600">📅 By Stay Type</p>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center p-3 bg-purple-50 rounded-xl">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-3 h-3 rounded-full bg-purple-500"></div>
+                                    <span class="text-sm font-bold">Full Stay</span>
+                                </div>
+                                <span class="text-2xl font-black text-purple-600" id="dash-full">0</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-orange-50 rounded-xl">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-3 h-3 rounded-full bg-orange-500"></div>
+                                    <span class="text-sm font-bold">Daycation</span>
+                                </div>
+                                <span class="text-2xl font-black text-orange-600" id="dash-daycation">0</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-indigo-50 rounded-xl">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-3 h-3 rounded-full bg-indigo-500"></div>
+                                    <span class="text-sm font-bold">Staycation</span>
+                                </div>
+                                <span class="text-2xl font-black text-indigo-600" id="dash-staycation">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-5 border border-gray-200">
+                        <p class="text-sm font-bold mb-4 text-gray-600">🛏️ By Room Type</p>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="p-3 bg-pink-50 rounded-xl text-center">
+                                <p class="text-xs text-gray-500 font-bold mb-1">Mini</p>
+                                <p class="text-3xl font-black text-pink-600" id="dash-mini">0</p>
+                            </div>
+                            <div class="p-3 bg-green-50 rounded-xl text-center">
+                                <p class="text-xs text-gray-500 font-bold mb-1">Classic</p>
+                                <p class="text-3xl font-black text-green-600" id="dash-classic">0</p>
+                            </div>
+                            <div class="p-3 bg-blue-50 rounded-xl text-center">
+                                <p class="text-xs text-gray-500 font-bold mb-1">Deluxe</p>
+                                <p class="text-3xl font-black text-blue-600" id="dash-deluxe">0</p>
+                            </div>
+                            <div class="p-3 bg-yellow-50 rounded-xl text-center">
+                                <p class="text-xs text-gray-500 font-bold mb-1">Suite</p>
+                                <p class="text-3xl font-black text-yellow-600" id="dash-suite">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Date Selector -->
                 <div class="bg-white rounded-2xl p-5 border border-gray-200">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-lg font-bold">Select Date</h3>
-                        <input type="date" 
-       onchange="selectDate(this.value)" 
-       class="text-sm border border-gray-200 rounded-lg px-3 py-2">
-
-   
-
-
+                        <input type="date" onchange="selectDate(this.value)" class="text-sm border border-gray-200 rounded-lg px-3 py-2">
                         <div class="text-sm text-gray-500" id="rooms-available">Rooms: <span class="font-bold text-black">—</span></div>
                     </div>
-                    <div class="flex gap-3 overflow-x-auto pb-2" id="date-selector">
-                        <!-- Date chips populated by JS -->
-                    </div>
+                    <div class="flex gap-3 overflow-x-auto pb-2" id="date-selector"></div>
                 </div>
 
                 <!-- Filter Tabs -->
@@ -116,11 +194,21 @@
                 </div>
             </section>
 
+            <!-- Latest Bookings Section -->
+            <section id="content-latest" class="hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-2xl font-black">Latest Bookings</h3>
+                    <button onclick="clearNewBadge()" class="text-xs font-bold text-[#c9a961] hover:underline">Mark all as seen</button>
+                </div>
+                <div id="latest-bookings-list" class="bg-white rounded-2xl p-6 border border-gray-200 space-y-4">
+                    <div class="text-center text-gray-400 text-sm py-8">No bookings yet</div>
+                </div>
+            </section>
+
             <!-- Insights Section -->
             <section id="content-insights" class="hidden space-y-6">
                 <h3 class="text-2xl font-black">Business Insights</h3>
                 
-                <!-- Revenue Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                     <div class="card bg-white p-8 border border-gray-200">
                         <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Total Revenue</p>
@@ -141,23 +229,16 @@
                     </div>
                 </div>
 
-                <!-- Room Type Breakdown -->
                 <div class="card bg-white p-8 border border-gray-200">
                     <p class="text-lg font-bold mb-6">Room Type Performance</p>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6" id="room-stats">
-                        <!-- Populated by JS -->
-                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6" id="room-stats"></div>
                 </div>
 
-                <!-- Package Breakdown -->
                 <div class="card bg-white p-8 border border-gray-200">
                     <p class="text-lg font-bold mb-6">Package Distribution</p>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="package-stats">
-                        <!-- Populated by JS -->
-                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="package-stats"></div>
                 </div>
 
-                <!-- Profit Analysis -->
                 <div class="card bg-white p-8 border border-gray-200">
                     <p class="text-lg font-bold mb-6">Profit Analysis</p>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -187,7 +268,111 @@
         </div>
     </div>
 
-    <!-- Booking Modal -->
+    <!-- Booking Details/Edit Modal -->
+    <div id="booking-details-modal" class="fixed inset-0 z-[75] hidden items-center justify-center p-4 modal-blur overflow-y-auto">
+        <div class="bg-white w-full max-w-3xl rounded-3xl p-8 shadow-2xl my-8">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-black" id="details-title">Booking Details</h3>
+                <button onclick="closeModals()" class="p-2 text-gray-400 hover:text-black">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            
+            <form id="edit-booking-form" class="space-y-6">
+                <input type="hidden" id="edit-booking-id">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Guest Name</label>
+                        <input type="text" id="edit-name" class="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-[#c9a961] outline-none" required>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Phone</label>
+                        <input type="tel" id="edit-phone" class="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-[#c9a961] outline-none" required>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Room Type</label>
+                        <select id="edit-room" class="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-[#c9a961] outline-none">
+                            <option value="Mini">Mini Room</option>
+                            <option value="Deluxe">Deluxe Room</option>
+                            <option value="Classic">Classic Room</option>
+                            <option value="Suite">Suite Room</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Package</label>
+                        <select id="edit-type" class="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-[#c9a961] outline-none">
+                            <option value="Daycation">Daycation (12PM - 5PM)</option>
+                            <option value="Staycation">Staycation (7PM - 12AM)</option>
+                            <option value="Full Stay">Full Stay (24 hrs)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Check-in Date</label>
+                        <input type="date" id="edit-date" class="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-[#c9a961] outline-none" required>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Time</label>
+                        <input type="time" id="edit-time" class="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-[#c9a961] outline-none" required>
+                    </div>
+                </div>
+
+                <!-- Status Selection -->
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-3">Status</label>
+                    <select id="edit-status" class="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-[#c9a961] outline-none">
+                        <option value="pending">Pending</option>
+                        <option value="checked-in">Checked In</option>
+                        <option value="checked-out">Checked Out</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+
+                <!-- Pricing Section -->
+                <div class="bg-gray-50 rounded-2xl p-5 space-y-4">
+                    <div class="flex justify-between items-center">
+                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Base Price (NPR)</label>
+                        <input type="number" id="edit-base-price" class="w-32 p-2 text-right bg-white rounded-lg border-none focus:ring-2 focus:ring-[#c9a961] outline-none font-bold" required>
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="applyEditDiscount(10)" class="flex-1 py-2 bg-white rounded-lg text-xs font-bold hover:bg-gray-200 transition-all">10% Off</button>
+                        <button type="button" onclick="applyEditDiscount(20)" class="flex-1 py-2 bg-white rounded-lg text-xs font-bold hover:bg-gray-200 transition-all">20% Off</button>
+                        <button type="button" onclick="applyEditDiscount(30)" class="flex-1 py-2 bg-white rounded-lg text-xs font-bold hover:bg-gray-200 transition-all">30% Off</button>
+                        <button type="button" onclick="clearEditDiscount()" class="flex-1 py-2 bg-white rounded-lg text-xs font-bold hover:bg-gray-200 transition-all">Clear</button>
+                    </div>
+                    <div class="flex justify-between items-center pt-3 border-t border-gray-200">
+                        <span class="font-bold">Final Amount</span>
+                        <span class="text-2xl font-black" id="edit-final-amount">Rs 0</span>
+                    </div>
+                    <input type="hidden" id="edit-discount" value="0">
+                    <input type="hidden" id="edit-amount" value="0">
+                </div>
+
+                <!-- Payment Status -->
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-3">Payment Status</label>
+                    <div class="flex gap-4">
+                        <label class="flex-1 flex items-center gap-3 p-4 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-all">
+                            <input type="radio" name="edit-payment-status" value="paid" class="w-5 h-5 text-[#c9a961]">
+                            <span class="font-bold text-sm">Paid</span>
+                        </label>
+                        <label class="flex-1 flex items-center gap-3 p-4 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-all">
+                            <input type="radio" name="edit-payment-status" value="unpaid" class="w-5 h-5 text-[#c9a961]">
+                            <span class="font-bold text-sm">Unpaid</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="deleteBooking()" class="px-6 py-3 bg-red-50 text-red-600 rounded-xl font-bold hover:bg-red-100 transition-all">Delete</button>
+                    <button type="button" onclick="closeModals()" class="flex-1 py-3 bg-gray-100 rounded-xl font-bold hover:bg-gray-200 transition-all">Cancel</button>
+                    <button type="submit" class="flex-1 py-3 btn-primary rounded-xl font-bold">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Booking Modal (New) -->
     <div id="booking-modal" class="fixed inset-0 z-[70] hidden items-center justify-center p-4 modal-blur overflow-y-auto">
         <div class="bg-white w-full max-w-3xl rounded-3xl p-8 shadow-2xl my-8">
             <h3 class="text-2xl font-black mb-6">New Reservation</h3>
@@ -335,6 +520,8 @@
         let selectedDate = new Date().toISOString().split('T')[0];
         let pendingCheckoutId = null;
         let qrScanner = null;
+        let lastBookingCount = 0;
+        let realtimeChannel = null;
 
         const TOTAL_ROOMS = 7;
 
@@ -357,7 +544,8 @@
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('app').classList.remove('hidden');
                 initializeDateSelector();
-                loadData();
+                await loadData();
+                setupRealtimeSubscription();
             } else {
                 document.getElementById('login-screen').classList.remove('hidden');
                 document.getElementById('app').classList.add('hidden');
@@ -365,9 +553,63 @@
         };
 
         window.logout = async () => {
+            if (realtimeChannel) {
+                supabase.removeChannel(realtimeChannel);
+            }
             await supabase.auth.signOut();
             window.location.reload();
         };
+
+        // Realtime Subscription
+        function setupRealtimeSubscription() {
+            realtimeChannel = supabase
+                .channel('bookings-changes')
+                .on('postgres_changes', 
+                    { event: 'INSERT', schema: 'public', table: 'bookings' },
+                    (payload) => {
+                        showNotification('New Booking!', `${payload.new.full_name} just booked ${payload.new.room_type}`);
+                        loadData();
+                    }
+                )
+                .on('postgres_changes',
+                    { event: 'UPDATE', schema: 'public', table: 'bookings' },
+                    (payload) => {
+                        loadData();
+                    }
+                )
+                .subscribe();
+        }
+
+        // Notifications
+        function showNotification(title, message) {
+            const container = document.getElementById('notification-container');
+            const notification = document.createElement('div');
+            notification.className = 'notification bg-white rounded-2xl p-4 shadow-2xl border-l-4 border-[#c9a961] flex items-start gap-3';
+            notification.innerHTML = `
+                <div class="w-10 h-10 bg-[#c9a961] rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                </div>
+                <div class="flex-1">
+                    <p class="font-bold text-sm">${title}</p>
+                    <p class="text-xs text-gray-500 mt-1">${message}</p>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-black">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            `;
+            container.appendChild(notification);
+            
+            // Update badge
+            const currentCount = allBookings.length;
+            if (currentCount > lastBookingCount) {
+                const badge = document.getElementById('new-bookings-badge');
+                const diff = currentCount - lastBookingCount;
+                badge.textContent = diff;
+                badge.classList.remove('hidden');
+            }
+            
+            setTimeout(() => notification.remove(), 5000);
+        }
 
         // Date Selector
         function initializeDateSelector() {
@@ -383,13 +625,18 @@
 
             container.innerHTML = dates.map((date, i) => {
                 const dateStr = date.toISOString().split('T')[0];
-                const isToday = i === 1;
-                const isTomorrow = i === 2;
+                const isToday = i === 30;
+                const isTomorrow = i === 31;
                 const label = isToday ? 'Today' : isTomorrow ? 'Tomorrow' : date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
                 const active = dateStr === selectedDate ? 'active' : '';
                 
                 return `<button onclick="selectDate('${dateStr}')" class="date-chip ${active} flex-shrink-0 px-5 py-3 bg-white border border-gray-200 rounded-xl text-sm font-bold whitespace-nowrap">${label}</button>`;
             }).join('');
+
+            setTimeout(() => {
+                const active = document.querySelector('.date-chip.active');
+                if (active) active.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+            }, 50);
         }
 
         window.selectDate = (date) => {
@@ -398,14 +645,7 @@
             updateRoomsAvailable();
             renderBookings();
             updateDailyDashboard();
-
         };
-
-        setTimeout(() => {
-        const active = document.querySelector('.date-chip.active');
-        if (active) active.scrollIntoView({ behavior: 'smooth', inline: 'center' });
-    }, 50);
-
 
         function updateRoomsAvailable() {
             const bookingsOnDate = allBookings.filter(b => 
@@ -419,7 +659,7 @@
 
         // Data Loading
         async function loadData() {
-            const { data, error } = await supabase.from('bookings').select('*').order('check_in_date', { ascending: false });
+            const { data, error } = await supabase.from('bookings').select('*').order('created_at', { ascending: false });
             if (error) {
                 console.error(error);
                 return;
@@ -427,44 +667,107 @@
             allBookings = data || [];
             renderBookings();
             renderInsights();
+            renderLatestBookings();
             updateRoomsAvailable();
             updateDailyDashboard();
-
+            
+            if (lastBookingCount === 0) {
+                lastBookingCount = allBookings.length;
+            }
         }
 
         function updateDailyDashboard() {
-    const bookings = allBookings.filter(b =>
-        b.check_in_date === selectedDate &&
-        (b.status === 'pending' || b.status === 'checked-in')
-    );
+            const bookings = allBookings.filter(b =>
+                b.check_in_date === selectedDate &&
+                (b.status === 'pending' || b.status === 'checked-in')
+            );
 
-    const booked = bookings.length;
-    const available = Math.max(0, TOTAL_ROOMS - booked);
-    const occupancy = Math.round((booked / TOTAL_ROOMS) * 100);
+            const booked = bookings.length;
+            const available = Math.max(0, TOTAL_ROOMS - booked);
+            const occupancy = Math.round((booked / TOTAL_ROOMS) * 100);
 
-    document.getElementById('dash-total').textContent = TOTAL_ROOMS;
-    document.getElementById('dash-booked').textContent = booked;
-    document.getElementById('dash-available').textContent = available;
-    document.getElementById('dash-occupancy').textContent = `${occupancy}%`;
+            document.getElementById('dash-total').textContent = TOTAL_ROOMS;
+            document.getElementById('dash-booked').textContent = booked;
+            document.getElementById('dash-available').textContent = available;
+            document.getElementById('dash-occupancy').textContent = `${occupancy}%`;
+            document.getElementById('dash-occupancy-bar').style.width = `${occupancy}%`;
 
-    // Stay type count
-    const stayCounts = { "Full Stay": 0, "Daycation": 0, "Staycation": 0 };
-    bookings.forEach(b => stayCounts[b.stay_type] = (stayCounts[b.stay_type] || 0) + 1);
+            const stayCounts = { "Full Stay": 0, "Daycation": 0, "Staycation": 0 };
+            bookings.forEach(b => stayCounts[b.stay_type] = (stayCounts[b.stay_type] || 0) + 1);
 
-    document.getElementById('dash-full').textContent = stayCounts["Full Stay"] || 0;
-    document.getElementById('dash-daycation').textContent = stayCounts["Daycation"] || 0;
-    document.getElementById('dash-staycation').textContent = stayCounts["Staycation"] || 0;
+            document.getElementById('dash-full').textContent = stayCounts["Full Stay"] || 0;
+            document.getElementById('dash-daycation').textContent = stayCounts["Daycation"] || 0;
+            document.getElementById('dash-staycation').textContent = stayCounts["Staycation"] || 0;
 
-    // Room type count
-    const roomCounts = { Mini: 0, Classic: 0, Deluxe: 0, Suite: 0 };
-    bookings.forEach(b => roomCounts[b.room_type] = (roomCounts[b.room_type] || 0) + 1);
+            const roomCounts = { Mini: 0, Classic: 0, Deluxe: 0, Suite: 0 };
+            bookings.forEach(b => roomCounts[b.room_type] = (roomCounts[b.room_type] || 0) + 1);
 
-    document.getElementById('dash-mini').textContent = roomCounts.Mini;
-    document.getElementById('dash-classic').textContent = roomCounts.Classic;
-    document.getElementById('dash-deluxe').textContent = roomCounts.Deluxe;
-    document.getElementById('dash-suite').textContent = roomCounts.Suite;
-}
+            document.getElementById('dash-mini').textContent = roomCounts.Mini;
+            document.getElementById('dash-classic').textContent = roomCounts.Classic;
+            document.getElementById('dash-deluxe').textContent = roomCounts.Deluxe;
+            document.getElementById('dash-suite').textContent = roomCounts.Suite;
+        }
 
+        // Render Latest Bookings
+        function renderLatestBookings() {
+            const container = document.getElementById('latest-bookings-list');
+            
+            if (allBookings.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-400 text-sm py-8">No bookings yet</div>';
+                return;
+            }
+
+            container.innerHTML = allBookings.map((b, index) => {
+                const timeAgo = getTimeAgo(b.created_at);
+                const statusColors = {
+                    'pending': 'bg-amber-100 text-amber-700',
+                    'checked-in': 'bg-emerald-100 text-emerald-700',
+                    'checked-out': 'bg-gray-100 text-gray-600',
+                    'cancelled': 'bg-red-100 text-red-600'
+                };
+
+                return `
+                    <div class="timeline-item border-b border-gray-100 last:border-0 pb-4 last:pb-0">
+                        <div class="timeline-dot"></div>
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <h4 class="font-bold text-sm">${b.full_name}</h4>
+                                    <span class="px-2 py-1 rounded-lg text-xs font-bold ${statusColors[b.status]}">${b.status.toUpperCase()}</span>
+                                </div>
+                                <div class="flex gap-4 text-xs text-gray-500">
+                                    <span>📱 ${b.phone_number}</span>
+                                    <span>🛏️ ${b.room_type}</span>
+                                    <span>📦 ${b.stay_type}</span>
+                                </div>
+                                <div class="flex gap-4 text-xs text-gray-400 mt-1">
+                                    <span>📅 ${b.check_in_date}</span>
+                                    <span>💰 Rs ${b.total_amount}</span>
+                                    <span>🕒 ${timeAgo}</span>
+                                </div>
+                            </div>
+                            <button onclick="openBookingDetails('${b.id}')" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs font-bold transition-all">
+                                View
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getTimeAgo(timestamp) {
+            const now = new Date();
+            const created = new Date(timestamp);
+            const diffMs = now - created;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return `${diffHours}h ago`;
+            return `${diffDays}d ago`;
+        }
 
         // Render Bookings
         function renderBookings() {
@@ -482,81 +785,61 @@
 
             grid.innerHTML = filtered.map(b => {
                 const statusStyles = {
-                    'pending': 'bg-amber-50 text-amber-700 border border-amber-200',
-                    'checked-in': 'bg-emerald-50 text-emerald-700 border border-emerald-200',
-                    'checked-out': 'bg-gray-100 text-gray-500',
-                    'cancelled': 'bg-red-50 text-red-600'
+                    'pending': 'bg-amber-50 text-amber-700 border border-amber-200','checked-in': 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+                    'checked-out': 'bg-gray-50 text-gray-600 border border-gray-200',
+                    'cancelled': 'bg-red-50 text-red-600 border border-red-200'
                 };
 
                 const paymentBadge = b.payment_status === 'paid' 
-                    ? '<span class="payment-badge paid">✓ Paid</span>' 
-                    : '<span class="payment-badge unpaid">⚠ Unpaid</span>';
+                    ? '<span class="payment-badge paid">✓ PAID</span>'
+                    : '<span class="payment-badge unpaid">⚠ UNPAID</span>';
 
-                const discountBadge = b.discount_percent > 0 
-                    ? `<span class="discount-badge text-xs bg-red-50 text-red-600 px-2 py-1 rounded-lg font-bold">${b.discount_percent}% OFF</span>` 
+                const discountBadge = b.discount_percentage > 0 
+                    ? `<span class="discount-badge text-xs bg-red-100 text-red-600 px-2 py-1 rounded-lg font-bold">${b.discount_percentage}% OFF</span>`
                     : '';
 
                 return `
-                    <div class="card bg-white p-5 border border-gray-200 space-y-4">
-                        <div class="flex justify-between items-start">
+                    <div class="card bg-white border border-gray-200 p-6">
+                        <div class="flex justify-between items-start mb-4">
                             <div>
-                                <h4 class="text-lg font-bold">${b.full_name}</h4>
-                                <p class="text-xs text-gray-400">${b.phone_number}</p>
+                                <h4 class="text-lg font-black mb-1">${b.full_name}</h4>
+                                <p class="text-xs text-gray-400 font-semibold">${b.phone_number}</p>
                             </div>
                             <span class="status-pill ${statusStyles[b.status]}">${b.status.toUpperCase()}</span>
                         </div>
                         
-                        <div class="flex justify-between items-center py-3 border-y border-gray-100">
-                            <div>
-                                <p class="text-xs text-gray-400 font-bold">Room & Package</p>
-                                <p class="text-sm font-bold">${b.room_type} • ${b.stay_type}</p>
+                        <div class="space-y-2 mb-4 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-500">Room</span>
+                                <span class="font-bold">${b.room_type}</span>
                             </div>
-                            <div class="text-right">
-                                <p class="text-xs text-gray-400 font-bold">Time</p>
-                                <p class="text-sm font-bold">${b.arrival_time || '—'}</p>
+                            <div class="flex justify-between">
+                                <span class="text-gray-500">Package</span>
+                                <span class="font-bold">${b.stay_type}</span>
                             </div>
-                        </div>
-
-                        <div class="flex justify-between items-center">
-                            <div class="space-y-1">
-                                ${paymentBadge}
-                                ${discountBadge}
+                            <div class="flex justify-between">
+                                <span class="text-gray-500">Time</span>
+                                <span class="font-bold">${b.check_in_time || 'N/A'}</span>
                             </div>
-                            <div class="text-right">
-                                ${b.discount_percent > 0 ? `<p class="text-xs line-through text-gray-400">Rs ${b.base_amount || 0}</p>` : ''}
-                                <p class="text-xl font-black">Rs ${b.total_amount || 0}</p>
-                            </div>
-                        </div>
-
-                        ${b.document_url ? `
-                            <div class="border-t border-gray-100 pt-3">
-                                <p class="text-xs text-gray-400 font-bold mb-2">DOCUMENT</p>
-                                <div class="flex gap-2 items-center">
-                                    ${b.document_url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? `
-                                        <img src="${b.document_url}" alt="Document" class="w-16 h-16 object-cover rounded-lg border border-gray-200 cursor-pointer" onclick="viewDocument('${b.document_url}')">
-                                    ` : `
-                                        <div class="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
-                                            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                                        </div>
-                                    `}
-                                    <a href="${b.document_url}" target="_blank" class="text-xs text-[#c9a961] hover:underline font-semibold flex items-center gap-1">
-                                        View Full Document
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                                    </a>
+                            <div class="flex justify-between items-center border-t border-gray-100 pt-2 mt-2">
+                                <span class="text-gray-500">Amount</span>
+                                <div class="text-right">
+                                    ${b.base_price !== b.total_amount ? `<div class="text-xs text-gray-400 line-through">Rs ${b.base_price}</div>` : ''}
+                                    <span class="font-black text-lg">Rs ${b.total_amount}</span>
                                 </div>
                             </div>
-                        ` : ''}
+                        </div>
+
+                        <div class="flex gap-2 mb-4">
+                            ${paymentBadge}
+                            ${discountBadge}
+                        </div>
 
                         <div class="flex gap-2">
-                            ${b.status === 'pending' ? `
-                                <button onclick="updateStatus('${b.id}', 'checked-in')" class="flex-1 py-2 bg-black text-white rounded-lg text-xs font-bold hover:bg-zinc-800">CHECK IN</button>
-                                <button onclick="cancelBooking('${b.id}')" class="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                </button>
-                            ` : ''}
-                            ${b.status === 'checked-in' ? `
-                                <button onclick="initCheckout('${b.id}', '${b.full_name}')" class="flex-1 py-2 border-2 border-black rounded-lg text-xs font-bold hover:bg-black hover:text-white">CHECKOUT</button>
-                            ` : ''}
+                            <button onclick="openBookingDetails('${b.id}')" class="flex-1 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl text-xs font-bold transition-all">Edit</button>
+                            ${b.status === 'pending' ? `<button onclick="quickCheckin('${b.id}')" class="flex-1 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition-all">Check In</button>` : ''}
+                            ${b.status === 'checked-in' ? `<button onclick="openPaymentModal('${b.id}')" class="flex-1 py-2 bg-[#c9a961] hover:bg-[#b39452] text-white rounded-xl text-xs font-bold transition-all">Checkout</button>` : ''}
+                            ${b.document_url ? `<button onclick="viewDocument('${b.document_url}')" class="py-2 px-3 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-xl text-xs font-bold transition-all">📄</button>` : ''}
                         </div>
                     </div>
                 `;
@@ -565,211 +848,125 @@
 
         // Render Insights
         function renderInsights() {
-            const totalRevenue = allBookings.filter(b => b.status === 'checked-out').reduce((sum, b) => sum + (b.total_amount || 0), 0);
-            const totalBookings = allBookings.length;
-            const activeGuests = allBookings.filter(b => b.status === 'checked-in').length;
-            const occupancy = Math.min(100, Math.round((activeGuests / TOTAL_ROOMS) * 100));
+            const totalRevenue = allBookings.reduce((sum, b) => sum + (b.total_amount || 0), 0);
+            const totalDiscounts = allBookings.reduce((sum, b) => {
+                const discount = (b.base_price || 0) - (b.total_amount || 0);
+                return sum + discount;
+            }, 0);
+            const netProfit = totalRevenue;
 
             document.getElementById('insight-revenue').textContent = `Rs ${totalRevenue.toLocaleString()}`;
-            document.getElementById('insight-bookings').textContent = totalBookings;
-            document.getElementById('insight-occupancy').textContent = `${occupancy}%`;
-            document.getElementById('occupancy-bar').style.width = `${occupancy}%`;
+            document.getElementById('insight-bookings').textContent = allBookings.length;
+            document.getElementById('total-discounts').textContent = `Rs ${totalDiscounts.toLocaleString()}`;
+            document.getElementById('net-profit').textContent = `Rs ${netProfit.toLocaleString()}`;
+
+            const totalDays = [...new Set(allBookings.map(b => b.check_in_date))].length;
+            const totalPossibleRooms = totalDays * TOTAL_ROOMS;
+            const occupancyRate = totalPossibleRooms > 0 ? Math.round((allBookings.length / totalPossibleRooms) * 100) : 0;
+            document.getElementById('insight-occupancy').textContent = `${occupancyRate}%`;
+            document.getElementById('occupancy-bar').style.width = `${occupancyRate}%`;
 
             // Room stats
-            const roomTypes = ['Mini', 'Deluxe', 'Classic', 'Suite'];
-            const roomStats = roomTypes.map(type => {
-                const count = allBookings.filter(b => b.room_type === type && b.status === 'checked-out').length;
-                const revenue = allBookings.filter(b => b.room_type === type && b.status === 'checked-out').reduce((sum, b) => sum + (b.total_amount || 0), 0);
-                return { type, count, revenue };
+            const roomStats = {};
+            allBookings.forEach(b => {
+                if (!roomStats[b.room_type]) roomStats[b.room_type] = { count: 0, revenue: 0 };
+                roomStats[b.room_type].count++;
+                roomStats[b.room_type].revenue += b.total_amount || 0;
             });
 
-            document.getElementById('room-stats').innerHTML = roomStats.map(r => `
+            document.getElementById('room-stats').innerHTML = Object.entries(roomStats).map(([type, stats]) => `
                 <div class="text-center">
-                    <p class="text-xs text-gray-400 font-bold mb-2">${r.type}</p>
-                    <p class="text-2xl font-black mb-1">${r.count}</p>
-                    <p class="text-xs text-green-600 font-semibold">Rs ${r.revenue.toLocaleString()}</p>
+                    <p class="text-xs text-gray-400 font-bold mb-1">${type}</p>
+                    <p class="text-2xl font-black mb-1">${stats.count}</p>
+                    <p class="text-xs text-gray-500">Rs ${stats.revenue.toLocaleString()}</p>
                 </div>
             `).join('');
 
             // Package stats
-            const packages = ['Daycation', 'Staycation', 'Full Stay'];
-            const packageStats = packages.map(pkg => {
-                const count = allBookings.filter(b => b.stay_type === pkg && b.status === 'checked-out').length;
-                const revenue = allBookings.filter(b => b.stay_type === pkg && b.status === 'checked-out').reduce((sum, b) => sum + (b.total_amount || 0), 0);
-                return { pkg, count, revenue };
+            const packageStats = {};
+            allBookings.forEach(b => {
+                if (!packageStats[b.stay_type]) packageStats[b.stay_type] = { count: 0, revenue: 0 };
+                packageStats[b.stay_type].count++;
+                packageStats[b.stay_type].revenue += b.total_amount || 0;
             });
 
-            document.getElementById('package-stats').innerHTML = packageStats.map(p => `
-                <div class="text-center p-4 bg-gray-50 rounded-xl">
-                    <p class="text-xs text-gray-400 font-bold mb-2">${p.pkg}</p>
-                    <p class="text-3xl font-black mb-1">${p.count}</p>
-                    <p class="text-sm text-green-600 font-semibold">Rs ${p.revenue.toLocaleString()}</p>
+            document.getElementById('package-stats').innerHTML = Object.entries(packageStats).map(([type, stats]) => `
+                <div class="p-4 bg-gray-50 rounded-xl">
+                    <p class="text-xs text-gray-400 font-bold mb-2">${type}</p>
+                    <p class="text-3xl font-black mb-1">${stats.count}</p>
+                    <p class="text-xs text-gray-500">Rs ${stats.revenue.toLocaleString()}</p>
                 </div>
             `).join('');
-
-            // Profit analysis
-            const totalDiscounts = allBookings.reduce((sum, b) => {
-                const base = b.base_amount || b.total_amount || 0;
-                const final = b.total_amount || 0;
-                return sum + (base - final);
-            }, 0);
-            const netProfit = totalRevenue;
-
-            document.getElementById('total-discounts').textContent = `Rs ${totalDiscounts.toLocaleString()}`;
-            document.getElementById('net-profit').textContent = `Rs ${netProfit.toLocaleString()}`;
         }
 
-        // Actions
-        window.switchTab = (tab) => {
-            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('tab-active'));
-            document.getElementById(`tab-${tab}`).classList.add('tab-active');
-            document.getElementById('content-bookings').classList.toggle('hidden', tab !== 'bookings');
-            document.getElementById('content-insights').classList.toggle('hidden', tab !== 'insights');
-        };
-
-        window.filterBookings = (status) => {
-            currentFilter = status;
-            document.querySelectorAll('.filter-btn').forEach(b => {
-                b.classList.remove('bg-white', 'shadow-sm');
-                b.classList.add('text-gray-500');
+        // Filter Bookings
+        window.filterBookings = (filter) => {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('bg-white', 'shadow-sm');
+                btn.classList.add('text-gray-500');
             });
-            const btn = document.getElementById(`filter-${status}`);
-            btn.classList.add('bg-white', 'shadow-sm');
-            btn.classList.remove('text-gray-500');
+            document.getElementById(`filter-${filter}`).classList.add('bg-white', 'shadow-sm');
+            document.getElementById(`filter-${filter}`).classList.remove('text-gray-500');
             renderBookings();
         };
 
+        // Tab Switching
+        window.switchTab = (tab) => {
+            document.querySelectorAll('[id^="content-"]').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`content-${tab}`).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-tab').forEach(btn => {
+                btn.classList.remove('tab-active');
+            });
+            document.getElementById(`tab-${tab}`).classList.add('tab-active');
+        };
+
+        window.clearNewBadge = () => {
+            lastBookingCount = allBookings.length;
+            document.getElementById('new-bookings-badge').classList.add('hidden');
+        };
+
+        // Modals
         window.openBookingModal = () => {
             document.getElementById('booking-modal').classList.remove('hidden');
             document.getElementById('booking-modal').classList.add('flex');
             document.getElementById('b-date').value = selectedDate;
         };
 
-        window.closeModals = () => {
-            document.querySelectorAll('.modal-blur').forEach(m => {
-                m.classList.add('hidden');
-                m.classList.remove('flex');
+        window.openBookingDetails = async (id) => {
+            const booking = allBookings.find(b => b.id === id);
+            if (!booking) return;
+
+            document.getElementById('edit-booking-id').value = booking.id;
+            document.getElementById('edit-name').value = booking.full_name;
+            document.getElementById('edit-phone').value = booking.phone_number;
+            document.getElementById('edit-room').value = booking.room_type;
+            document.getElementById('edit-type').value = booking.stay_type;
+            document.getElementById('edit-date').value = booking.check_in_date;
+            document.getElementById('edit-time').value = booking.check_in_time || '';
+            document.getElementById('edit-status').value = booking.status;
+            document.getElementById('edit-base-price').value = booking.base_price;
+            document.getElementById('edit-discount').value = booking.discount_percentage || 0;
+            document.getElementById('edit-amount').value = booking.total_amount;
+            document.getElementById('edit-final-amount').textContent = `Rs ${booking.total_amount}`;
+            
+            const paymentRadios = document.querySelectorAll('input[name="edit-payment-status"]');
+            paymentRadios.forEach(radio => {
+                radio.checked = radio.value === booking.payment_status;
             });
-            if (qrScanner) {
-                qrScanner.stop();
-                qrScanner = null;
-            }
-            showStep1();
-            pendingCheckoutId = null;
+
+            document.getElementById('booking-details-modal').classList.remove('hidden');
+            document.getElementById('booking-details-modal').classList.add('flex');
         };
 
-        // Discount
-        window.applyDiscount = (percent) => {
-            const basePrice = parseFloat(document.getElementById('b-base-price').value) || 0;
-            const discount = basePrice * (percent / 100);
-            const finalPrice = basePrice - discount;
-            document.getElementById('b-discount').value = percent;
-            document.getElementById('b-amount').value = finalPrice;
-            document.getElementById('final-amount').textContent = `Rs ${finalPrice.toFixed(0)}`;
-        };
-
-        window.clearDiscount = () => {
-            const basePrice = parseFloat(document.getElementById('b-base-price').value) || 0;
-            document.getElementById('b-discount').value = 0;
-            document.getElementById('b-amount').value = basePrice;
-            document.getElementById('final-amount').textContent = `Rs ${basePrice}`;
-        };
-
-        document.getElementById('b-base-price').addEventListener('input', (e) => {
-            const basePrice = parseFloat(e.target.value) || 0;
-            const discountPercent = parseFloat(document.getElementById('b-discount').value) || 0;
-            const finalPrice = basePrice - (basePrice * (discountPercent / 100));
-            document.getElementById('b-amount').value = finalPrice;
-            document.getElementById('final-amount').textContent = `Rs ${finalPrice.toFixed(0)}`;
-        });
-
-        // Form submission
-        document.getElementById('booking-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            let documentUrl = null;
-            const fileInput = document.getElementById('b-document');
-            
-            if (fileInput.files.length > 0) {
-                const file = fileInput.files[0];
-                const fileName = `${Date.now()}_${file.name}`;
-                const { data, error } = await supabase.storage.from('documents').upload(fileName, file);
-                
-                if (!error) {
-                    const { data: urlData } = supabase.storage.from('documents').getPublicUrl(fileName);
-                    documentUrl = urlData.publicUrl;
-                }
-            }
-
-            const paymentStatus = document.querySelector('input[name="payment-status"]:checked').value;
-            const baseAmount = parseFloat(document.getElementById('b-base-price').value) || 0;
-            const discountPercent = parseFloat(document.getElementById('b-discount').value) || 0;
-            const finalAmount = parseFloat(document.getElementById('b-amount').value) || 0;
-
-            const payload = {
-                full_name: document.getElementById('b-name').value,
-                phone_number: document.getElementById('b-phone').value,
-                room_type: document.getElementById('b-room').value,
-                stay_type: document.getElementById('b-type').value,
-                check_in_date: document.getElementById('b-date').value,
-                arrival_time: document.getElementById('b-time').value,
-                base_amount: baseAmount,
-                discount_percent: discountPercent,
-                total_amount: finalAmount,
-                payment_status: paymentStatus,
-                document_url: documentUrl,
-                status: 'pending'
-            };
-
-            const { error } = await supabase.from('bookings').insert([payload]);
-            if (error) alert(error.message);
-            else {
-                closeModals();
-                document.getElementById('booking-form').reset();
-                loadData();
-            }
-        });
-
-        // QR Scanner
-        window.openQRScanner = () => {
-            const modal = document.getElementById('qr-scanner-modal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            
-            qrScanner = new Html5Qrcode("qr-reader");
-            qrScanner.start(
-                { facingMode: "environment" },
-                { fps: 10, qrbox: 250 },
-                (decodedText) => {
-                    qrScanner.stop();
-                    handleQRScan(decodedText);
-                }
-            ).catch(err => console.error(err));
-        };
-
-        async function handleQRScan(qrData) {
-            const booking = allBookings.find(b => b.id === qrData || b.phone_number === qrData);
-            if (booking && booking.status === 'pending') {
-                await updateStatus(booking.id, 'checked-in');
-                alert(`✓ ${booking.full_name} checked in successfully!`);
-            } else {
-                alert('Booking not found or already checked in');
-            }
-            closeModals();
-        }
-
-        // Payment
-        window.initCheckout = (id, name) => {
+        window.openPaymentModal = (id) => {
             pendingCheckoutId = id;
-            document.getElementById('payment-guest-name').textContent = name;
-            const modal = document.getElementById('payment-modal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        };
-
-        window.showQRStep = () => {
-            document.getElementById('payment-step-1').classList.add('hidden');
-            document.getElementById('payment-step-qr').classList.remove('hidden');
+            const booking = allBookings.find(b => b.id === id);
+            document.getElementById('payment-guest-name').textContent = booking?.full_name || 'Guest';
+            document.getElementById('payment-modal').classList.remove('hidden');
+            document.getElementById('payment-modal').classList.add('flex');
+            showStep1();
         };
 
         window.showStep1 = () => {
@@ -777,40 +974,26 @@
             document.getElementById('payment-step-qr').classList.add('hidden');
         };
 
-        window.processPayment = async (method) => {
-            if (!pendingCheckoutId) return;
-            const { error } = await supabase.from('bookings').update({ 
-                status: 'checked-out',
-                payment_status: 'paid',
-                notes: `Paid via ${method}` 
-            }).eq('id', pendingCheckoutId);
+        window.showQRStep = () => {
+            document.getElementById('payment-step-1').classList.add('hidden');
+            document.getElementById('payment-step-qr').classList.remove('hidden');
+        };
 
-            if (error) alert(error.message);
-            else {
-                closeModals();
-                loadData();
+        window.closeModals = () => {
+            document.querySelectorAll('[id$="-modal"]').forEach(modal => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            });
+            if (qrScanner) {
+                qrScanner.stop();
+                qrScanner = null;
             }
         };
 
-        window.updateStatus = async (id, status) => {
-            const { error } = await supabase.from('bookings').update({ status }).eq('id', id);
-            if (error) alert(error.message);
-            else loadData();
-        };
-
-        window.cancelBooking = async (id) => {
-            if (!confirm("Cancel this booking?")) return;
-            const { error } = await supabase.from('bookings').update({ status: 'cancelled' }).eq('id', id);
-            if (error) alert(error.message);
-            else loadData();
-        };
-
-        // Document Viewer
         window.viewDocument = (url) => {
             document.getElementById('document-image').src = url;
-            const modal = document.getElementById('document-viewer-modal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+            document.getElementById('document-viewer-modal').classList.remove('hidden');
+            document.getElementById('document-viewer-modal').classList.add('flex');
         };
 
         window.closeDocumentViewer = () => {
@@ -818,6 +1001,209 @@
             document.getElementById('document-viewer-modal').classList.remove('flex');
         };
 
+        // Discount Functions
+        window.applyDiscount = (percent) => {
+            const basePrice = parseFloat(document.getElementById('b-base-price').value) || 0;
+            const discountAmount = (basePrice * percent) / 100;
+            const finalAmount = basePrice - discountAmount;
+            
+            document.getElementById('b-discount').value = percent;
+            document.getElementById('b-amount').value = finalAmount;
+            document.getElementById('final-amount').textContent = `Rs ${finalAmount.toFixed(0)}`;
+        };
+
+        window.clearDiscount = () => {
+            const basePrice = parseFloat(document.getElementById('b-base-price').value) || 0;
+            document.getElementById('b-discount').value = 0;
+            document.getElementById('b-amount').value = basePrice;
+            document.getElementById('final-amount').textContent = `Rs ${basePrice.toFixed(0)}`;
+        };
+
+        window.applyEditDiscount = (percent) => {
+            const basePrice = parseFloat(document.getElementById('edit-base-price').value) || 0;
+            const discountAmount = (basePrice * percent) / 100;
+            const finalAmount = basePrice - discountAmount;
+            
+            document.getElementById('edit-discount').value = percent;
+            document.getElementById('edit-amount').value = finalAmount;
+            document.getElementById('edit-final-amount').textContent = `Rs ${finalAmount.toFixed(0)}`;
+        };
+
+        window.clearEditDiscount = () => {
+            const basePrice = parseFloat(document.getElementById('edit-base-price').value) || 0;
+            document.getElementById('edit-discount').value = 0;
+            document.getElementById('edit-amount').value = basePrice;
+            document.getElementById('edit-final-amount').textContent = `Rs ${basePrice.toFixed(0)}`;
+        };
+
+        // Update amount on base price change
+        document.getElementById('b-base-price').addEventListener('input', function() {
+            clearDiscount();
+        });
+
+        document.getElementById('edit-base-price').addEventListener('input', function() {
+            clearEditDiscount();
+        });
+
+        // Form Submissions
+        document.getElementById('booking-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const basePrice = parseFloat(document.getElementById('b-base-price').value) || 0;
+            const discountPercent = parseFloat(document.getElementById('b-discount').value) || 0;
+            const finalAmount = parseFloat(document.getElementById('b-amount').value) || basePrice;
+            
+            const paymentStatus = document.querySelector('input[name="payment-status"]:checked')?.value || 'unpaid';
+            
+            let documentUrl = null;
+            const fileInput = document.getElementById('b-document');
+            if (fileInput.files[0]) {
+                const file = fileInput.files[0];
+                const fileName = `${Date.now()}_${file.name}`;
+                const { data, error } = await supabase.storage
+                    .from('documents')
+                    .upload(fileName, file);
+                
+                if (!error) {
+                    const { data: urlData } = supabase.storage
+                        .from('documents')
+                        .getPublicUrl(fileName);
+                    documentUrl = urlData.publicUrl;
+                }
+            }
+
+            const bookingData = {
+                full_name: document.getElementById('b-name').value,
+                phone_number: document.getElementById('b-phone').value,
+                room_type: document.getElementById('b-room').value,
+                stay_type: document.getElementById('b-type').value,
+                check_in_date: document.getElementById('b-date').value,
+                check_in_time: document.getElementById('b-time').value,
+                base_price: basePrice,
+                discount_percentage: discountPercent,
+                total_amount: finalAmount,
+                payment_status: paymentStatus,
+                status: 'pending',
+                document_url: documentUrl
+            };
+
+            const { error } = await supabase.from('bookings').insert([bookingData]);
+            
+            if (error) {
+                alert('Error creating booking: ' + error.message);
+            } else {
+                closeModals();
+                e.target.reset();
+                loadData();
+            }
+        });
+
+        document.getElementById('edit-booking-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const id = document.getElementById('edit-booking-id').value;
+            const basePrice = parseFloat(document.getElementById('edit-base-price').value) || 0;
+            const discountPercent = parseFloat(document.getElementById('edit-discount').value) || 0;
+            const finalAmount = parseFloat(document.getElementById('edit-amount').value) || basePrice;
+            const paymentStatus = document.querySelector('input[name="edit-payment-status"]:checked')?.value || 'unpaid';
+
+            const updateData = {
+                full_name: document.getElementById('edit-name').value,
+                phone_number: document.getElementById('edit-phone').value,
+                room_type: document.getElementById('edit-room').value,
+                stay_type: document.getElementById('edit-type').value,
+                check_in_date: document.getElementById('edit-date').value,
+                check_in_time: document.getElementById('edit-time').value,
+                status: document.getElementById('edit-status').value,
+                base_price: basePrice,
+                discount_percentage: discountPercent,
+                total_amount: finalAmount,
+                payment_status: paymentStatus
+            };
+
+            const { error } = await supabase.from('bookings').update(updateData).eq('id', id);
+            
+            if (error) {
+                alert('Error updating booking: ' + error.message);
+            } else {
+                closeModals();
+                loadData();
+            }
+        });
+
+        // Quick Actions
+        window.quickCheckin = async (id) => {
+            const { error } = await supabase.from('bookings').update({ status: 'checked-in' }).eq('id', id);
+            if (error) {
+                alert('Error checking in: ' + error.message);
+            } else {
+                showNotification('Checked In', 'Guest successfully checked in');
+                loadData();
+            }
+        };
+
+        window.processPayment = async (method) => {
+            if (!pendingCheckoutId) return;
+            
+            const { error } = await supabase.from('bookings').update({ 
+                status: 'checked-out',
+                payment_status: 'paid'
+            }).eq('id', pendingCheckoutId);
+            
+            if (error) {
+                alert('Error processing checkout: ' + error.message);
+            } else {
+                showNotification('Checkout Complete', `Payment received via ${method}`);
+                closeModals();
+                pendingCheckoutId = null;
+                loadData();
+            }
+        };
+
+        window.deleteBooking = async () => {
+            if (!confirm('Are you sure you want to delete this booking?')) return;
+            
+            const id = document.getElementById('edit-booking-id').value;
+            const { error } = await supabase.from('bookings').delete().eq('id', id);
+            
+            if (error) {
+                alert('Error deleting booking: ' + error.message);
+            } else {
+                closeModals();
+                loadData();
+            }
+        };
+
+        // QR Scanner
+        window.openQRScanner = () => {
+            document.getElementById('qr-scanner-modal').classList.remove('hidden');
+            document.getElementById('qr-scanner-modal').classList.add('flex');
+            
+            qrScanner = new Html5Qrcode("qr-reader");
+            qrScanner.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: 250 },
+                async (decodedText) => {
+                    qrScanner.stop();
+                    try {
+                        const bookingId = decodedText;
+                        const booking = allBookings.find(b => b.id === bookingId);
+                        if (booking) {
+                            closeModals();
+                            openBookingDetails(bookingId);
+                        } else {
+                            alert('Booking not found');
+                        }
+                    } catch (e) {
+                        alert('Invalid QR code');
+                    }
+                }
+            ).catch(err => {
+                console.error('QR Scanner error:', err);
+            });
+        };
+
+        // Initialize
         checkSession();
     </script>
 </body>
