@@ -35,6 +35,130 @@
         .timeline-item { position: relative; padding-left: 30px; }
         .timeline-item::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: #e5e7eb; }
         .timeline-dot { position: absolute; left: -4px; top: 8px; width: 10px; height: 10px; border-radius: 50%; background: #c9a961; border: 2px solid white; }
+        .availability-hero {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 24px;
+    padding: 2rem;
+    color: white;
+    margin-bottom: 1.5rem;
+}
+
+.stay-type-card {
+    background: white;
+    border-radius: 20px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 3px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.stay-type-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    transition: all 0.3s;
+}
+
+.stay-type-card.daycation::before { background: #f59e0b; }
+.stay-type-card.staycation::before { background: #8b5cf6; }
+.stay-type-card.fullstay::before { background: #10b981; }
+
+.stay-type-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+}
+
+.available-count {
+    font-size: 4rem;
+    font-weight: 900;
+    line-height: 1;
+    margin: 0.5rem 0;
+    background: linear-gradient(135deg, #1f2937 0%, #4b5563 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.available-count.low { 
+    background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.available-count.medium { 
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.available-count.high { 
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.capacity-bar {
+    width: 100%;
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: 1rem;
+}
+
+.capacity-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.capacity-fill.daycation { background: linear-gradient(90deg, #f59e0b 0%, #fb923c 100%); }
+.capacity-fill.staycation { background: linear-gradient(90deg, #8b5cf6 0%, #a78bfa 100%); }
+.capacity-fill.fullstay { background: linear-gradient(90deg, #10b981 0%, #34d399 100%); }
+
+.room-type-mini {
+    background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+    border-left: 4px solid #ec4899;
+}
+
+.room-type-classic {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border-left: 4px solid #3b82f6;
+}
+
+.room-type-deluxe {
+    background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%);
+    border-left: 4px solid #8b5cf6;
+}
+
+.room-type-suite {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-left: 4px solid #f59e0b;
+}
+
+.pulse-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+@media (max-width: 768px) {
+    .available-count { font-size: 3rem; }
+    .availability-hero { padding: 1.5rem; }
+}
     </style>
 </head>
 <body class="antialiased">
@@ -89,84 +213,114 @@
         <main class="max-w-7xl mx-auto p-6 space-y-8">
             
             <!-- Bookings Section -->
-            <section id="content-bookings" class="space-y-6">
-                <!-- Daily Dashboard Overview -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div class="bg-gradient-to-br from-[#c9a961] to-[#b39452] text-white rounded-2xl p-5">
-                        <p class="text-xs font-bold opacity-80 uppercase tracking-wider mb-2">Total Rooms</p>
-                        <p class="text-4xl font-black mb-1" id="dash-total">7</p>
-                        <p class="text-xs opacity-80">Capacity</p>
-                    </div>
-                    <div class="bg-white rounded-2xl p-5 border-2 border-emerald-500">
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Booked</p>
-                        <p class="text-4xl font-black text-emerald-600 mb-1" id="dash-booked">0</p>
-                        <p class="text-xs text-gray-400">Active bookings</p>
-                    </div>
-                    <div class="bg-white rounded-2xl p-5 border-2 border-blue-500">
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Available</p>
-                        <p class="text-4xl font-black text-blue-600 mb-1" id="dash-available">7</p>
-                        <p class="text-xs text-gray-400">Rooms left</p>
-                    </div>
-                    <div class="bg-white rounded-2xl p-5 border-2 border-amber-500">
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Occupancy</p>
-                        <p class="text-4xl font-black text-amber-600 mb-1" id="dash-occupancy">0%</p>
-                        <div class="w-full bg-gray-100 rounded-full h-2 mt-2">
-                            <div class="bg-amber-500 h-full rounded-full transition-all duration-500" id="dash-occupancy-bar" style="width: 0%"></div>
-                        </div>
-                    </div>
-                </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+        <!-- Daycation -->
+        <div class="stay-type-card daycation">
+            <div class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">
+                ☀️ Daycation
+            </div>
+            <div class="text-xs text-gray-400 mb-3">12PM - 5PM</div>
+            
+            <div id="dash-daycation-available" class="available-count high">15</div>
+            
+            <div class="text-sm font-bold text-gray-600 mb-1">Available Now</div>
+            <div class="text-xs text-gray-400">
+                <span id="dash-daycation-booked">0</span> booked
+            </div>
+            
+            <div class="capacity-bar">
+                <div id="dash-daycation-bar" class="capacity-fill daycation" style="width: 0%"></div>
+            </div>
+        </div>
 
-                <!-- Stay Type & Room Type Breakdown -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="bg-white rounded-2xl p-5 border border-gray-200">
-                        <p class="text-sm font-bold mb-4 text-gray-600">📅 By Stay Type</p>
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-center p-3 bg-purple-50 rounded-xl">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-3 h-3 rounded-full bg-purple-500"></div>
-                                    <span class="text-sm font-bold">Full Stay</span>
-                                </div>
-                                <span class="text-2xl font-black text-purple-600" id="dash-full">0</span>
-                            </div>
-                            <div class="flex justify-between items-center p-3 bg-orange-50 rounded-xl">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-3 h-3 rounded-full bg-orange-500"></div>
-                                    <span class="text-sm font-bold">Daycation</span>
-                                </div>
-                                <span class="text-2xl font-black text-orange-600" id="dash-daycation">0</span>
-                            </div>
-                            <div class="flex justify-between items-center p-3 bg-indigo-50 rounded-xl">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-3 h-3 rounded-full bg-indigo-500"></div>
-                                    <span class="text-sm font-bold">Staycation</span>
-                                </div>
-                                <span class="text-2xl font-black text-indigo-600" id="dash-staycation">0</span>
-                            </div>
-                        </div>
-                    </div>
+        <!-- Staycation -->
+        <div class="stay-type-card staycation">
+            <div class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">
+                🌙 Staycation
+            </div>
+            <div class="text-xs text-gray-400 mb-3">7PM - 12AM</div>
+            
+            <div id="dash-staycation-available" class="available-count high">15</div>
+            
+            <div class="text-sm font-bold text-gray-600 mb-1">Available Now</div>
+            <div class="text-xs text-gray-400">
+                <span id="dash-staycation-booked">0</span> booked
+            </div>
+            
+            <div class="capacity-bar">
+                <div id="dash-staycation-bar" class="capacity-fill staycation" style="width: 0%"></div>
+            </div>
+        </div>
 
-                    <div class="bg-white rounded-2xl p-5 border border-gray-200">
-                        <p class="text-sm font-bold mb-4 text-gray-600">🛏️ By Room Type</p>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div class="p-3 bg-pink-50 rounded-xl text-center">
-                                <p class="text-xs text-gray-500 font-bold mb-1">Mini</p>
-                                <p class="text-3xl font-black text-pink-600" id="dash-mini">0</p>
-                            </div>
-                            <div class="p-3 bg-green-50 rounded-xl text-center">
-                                <p class="text-xs text-gray-500 font-bold mb-1">Classic</p>
-                                <p class="text-3xl font-black text-green-600" id="dash-classic">0</p>
-                            </div>
-                            <div class="p-3 bg-blue-50 rounded-xl text-center">
-                                <p class="text-xs text-gray-500 font-bold mb-1">Deluxe</p>
-                                <p class="text-3xl font-black text-blue-600" id="dash-deluxe">0</p>
-                            </div>
-                            <div class="p-3 bg-yellow-50 rounded-xl text-center">
-                                <p class="text-xs text-gray-500 font-bold mb-1">Suite</p>
-                                <p class="text-3xl font-black text-yellow-600" id="dash-suite">0</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <!-- Full Stay -->
+        <div class="stay-type-card fullstay">
+            <div class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">
+                🏨 Full Stay
+            </div>
+            <div class="text-xs text-gray-400 mb-3">24 Hours</div>
+            
+            <div id="dash-fullstay-available" class="available-count high">15</div>
+            
+            <div class="text-sm font-bold text-gray-600 mb-1">Available Now</div>
+            <div class="text-xs text-gray-400">
+                <span id="dash-fullstay-booked">0</span> booked
+            </div>
+            
+            <div class="capacity-bar">
+                <div id="dash-fullstay-bar" class="capacity-fill fullstay" style="width: 0%"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secondary: Room Type Breakdown -->
+    <div class="bg-white rounded-2xl p-5 border border-gray-200">
+        <h3 class="text-sm font-bold text-gray-600 uppercase tracking-wider mb-4">🛏️ Available by Room Type</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="room-type-mini rounded-xl p-4 text-center">
+                <div class="text-xs font-bold text-gray-600 mb-2">Mini</div>
+                <div class="text-3xl font-black text-pink-600"><span id="dash-mini-available">3</span><span class="text-lg text-gray-400">/3</span></div>
+                <div class="text-xs text-gray-500 mt-1"><span id="dash-mini-booked">0</span> booked</div>
+            </div>
+            <div class="room-type-classic rounded-xl p-4 text-center">
+                <div class="text-xs font-bold text-gray-600 mb-2">Classic</div>
+                <div class="text-3xl font-black text-blue-600"><span id="dash-classic-available">6</span><span class="text-lg text-gray-400">/6</span></div>
+                <div class="text-xs text-gray-500 mt-1"><span id="dash-classic-booked">0</span> booked</div>
+            </div>
+            <div class="room-type-deluxe rounded-xl p-4 text-center">
+                <div class="text-xs font-bold text-gray-600 mb-2">Deluxe</div>
+                <div class="text-3xl font-black text-purple-600"><span id="dash-deluxe-available">3</span><span class="text-lg text-gray-400">/3</span></div>
+                <div class="text-xs text-gray-500 mt-1"><span id="dash-deluxe-booked">0</span> booked</div>
+            </div>
+            <div class="room-type-suite rounded-xl p-4 text-center">
+                <div class="text-xs font-bold text-gray-600 mb-2">Suite</div>
+                <div class="text-3xl font-black text-amber-600"><span id="dash-suite-available">2</span><span class="text-lg text-gray-400">/2</span></div>
+                <div class="text-xs text-gray-500 mt-1"><span id="dash-suite-booked">0</span> booked</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rest of your existing sections (Date Selector, Filter Tabs, Bookings Grid) -->
+    <div class="bg-white rounded-2xl p-5 border border-gray-200">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold">Select Date</h3>
+            <input type="date" onchange="selectDate(this.value)" class="text-sm border border-gray-200 rounded-lg px-3 py-2">
+        </div>
+        <div class="flex gap-3 overflow-x-auto pb-2" id="date-selector"></div>
+    </div>
+
+    <div class="flex justify-between items-center">
+        <h3 class="text-2xl font-black">Guest List</h3>
+        <div class="flex gap-2 bg-gray-100 rounded-xl p-1">
+            <button onclick="filterBookings('all')" class="px-4 py-2 text-xs font-bold rounded-lg filter-btn bg-white shadow-sm" id="filter-all">All</button>
+            <button onclick="filterBookings('pending')" class="px-4 py-2 text-xs font-bold rounded-lg filter-btn text-gray-500" id="filter-pending">Pending</button>
+            <button onclick="filterBookings('checked-in')" class="px-4 py-2 text-xs font-bold rounded-lg filter-btn text-gray-500" id="filter-checked-in">Active</button>
+        </div>
+    </div>
+
+    <div id="bookings-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div class="col-span-full py-16 text-center text-gray-400 text-sm">Loading...</div>
+    </div>
+</section>
 
                 <!-- Date Selector -->
                 <div class="bg-white rounded-2xl p-5 border border-gray-200">
@@ -523,7 +677,7 @@
         let lastBookingCount = 0;
         let realtimeChannel = null;
 
-        const TOTAL_ROOMS = 7;
+        const TOTAL_ROOMS = 15;
 
         // Auth
         document.getElementById('login-form').addEventListener('submit', async (e) => {
@@ -676,38 +830,82 @@
             }
         }
 
-        function updateDailyDashboard() {
-            const bookings = allBookings.filter(b =>
-                b.check_in_date === selectedDate &&
-                (b.status === 'pending' || b.status === 'checked-in')
-            );
+       function updateDailyDashboard() {
+    const ROOM_CAPACITY = {
+        mini: 3,
+        classic: 6,
+        deluxe: 3,
+        suite: 2,
+        total: 15
+    };
 
-            const booked = bookings.length;
-            const available = Math.max(0, TOTAL_ROOMS - booked);
-            const occupancy = Math.round((booked / TOTAL_ROOMS) * 100);
+    const bookings = allBookings.filter(b =>
+        b.check_in_date === selectedDate &&
+        (b.status === 'pending' || b.status === 'checked-in')
+    );
 
-            document.getElementById('dash-total').textContent = TOTAL_ROOMS;
-            document.getElementById('dash-booked').textContent = booked;
-            document.getElementById('dash-available').textContent = available;
-            document.getElementById('dash-occupancy').textContent = `${occupancy}%`;
-            document.getElementById('dash-occupancy-bar').style.width = `${occupancy}%`;
+    // Count by stay type
+    const stayTypeCounts = {
+        "Daycation": 0,
+        "Staycation": 0,
+        "Full Stay": 0
+    };
 
-            const stayCounts = { "Full Stay": 0, "Daycation": 0, "Staycation": 0 };
-            bookings.forEach(b => stayCounts[b.stay_type] = (stayCounts[b.stay_type] || 0) + 1);
+    const roomTypeCounts = {
+        "Mini": 0,
+        "Classic": 0,
+        "Deluxe": 0,
+        "Suite": 0
+    };
 
-            document.getElementById('dash-full').textContent = stayCounts["Full Stay"] || 0;
-            document.getElementById('dash-daycation').textContent = stayCounts["Daycation"] || 0;
-            document.getElementById('dash-staycation').textContent = stayCounts["Staycation"] || 0;
+    bookings.forEach(b => {
+        stayTypeCounts[b.stay_type] = (stayTypeCounts[b.stay_type] || 0) + 1;
+        roomTypeCounts[b.room_type] = (roomTypeCounts[b.room_type] || 0) + 1;
+    });
 
-            const roomCounts = { Mini: 0, Classic: 0, Deluxe: 0, Suite: 0 };
-            bookings.forEach(b => roomCounts[b.room_type] = (roomCounts[b.room_type] || 0) + 1);
+    // Update stay type cards
+    updateStayTypeCard('daycation', stayTypeCounts["Daycation"], ROOM_CAPACITY.total);
+    updateStayTypeCard('staycation', stayTypeCounts["Staycation"], ROOM_CAPACITY.total);
+    updateStayTypeCard('fullstay', stayTypeCounts["Full Stay"], ROOM_CAPACITY.total);
 
-            document.getElementById('dash-mini').textContent = roomCounts.Mini;
-            document.getElementById('dash-classic').textContent = roomCounts.Classic;
-            document.getElementById('dash-deluxe').textContent = roomCounts.Deluxe;
-            document.getElementById('dash-suite').textContent = roomCounts.Suite;
-        }
+    // Update room type cards
+    updateRoomTypeCard('mini', roomTypeCounts["Mini"], ROOM_CAPACITY.mini);
+    updateRoomTypeCard('classic', roomTypeCounts["Classic"], ROOM_CAPACITY.classic);
+    updateRoomTypeCard('deluxe', roomTypeCounts["Deluxe"], ROOM_CAPACITY.deluxe);
+    updateRoomTypeCard('suite', roomTypeCounts["Suite"], ROOM_CAPACITY.suite);
+}
 
+function updateStayTypeCard(type, booked, total) {
+    const available = total - booked;
+    const percentage = (booked / total) * 100;
+    
+    // Update available count with color coding
+    const availableEl = document.getElementById(`dash-${type}-available`);
+    availableEl.textContent = available;
+    
+    // Color coding: red (0-3), orange (4-7), green (8+)
+    availableEl.className = 'available-count';
+    if (available <= 3) {
+        availableEl.classList.add('low');
+    } else if (available <= 7) {
+        availableEl.classList.add('medium');
+    } else {
+        availableEl.classList.add('high');
+    }
+    
+    // Update booked count
+    document.getElementById(`dash-${type}-booked`).textContent = booked;
+    
+    // Update capacity bar
+    document.getElementById(`dash-${type}-bar`).style.width = `${percentage}%`;
+}
+
+function updateRoomTypeCard(type, booked, total) {
+    const available = total - booked;
+    
+    document.getElementById(`dash-${type}-available`).textContent = available;
+    document.getElementById(`dash-${type}-booked`).textContent = booked;
+}
         // Render Latest Bookings
         function renderLatestBookings() {
             const container = document.getElementById('latest-bookings-list');
@@ -794,8 +992,8 @@
                     ? '<span class="payment-badge paid">✓ PAID</span>'
                     : '<span class="payment-badge unpaid">⚠ UNPAID</span>';
 
-                const discountBadge = b.discount_percentage > 0 
-                    ? `<span class="discount-badge text-xs bg-red-100 text-red-600 px-2 py-1 rounded-lg font-bold">${b.discount_percentage}% OFF</span>`
+                const discountBadge = b.discount_percent > 0 
+                    ? `<span class="discount-badge text-xs bg-red-100 text-red-600 px-2 py-1 rounded-lg font-bold">${b.discount_percent}% OFF</span>`
                     : '';
 
                 return `
@@ -819,7 +1017,7 @@
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-500">Time</span>
-                                <span class="font-bold">${b.check_in_time || 'N/A'}</span>
+                                <span class="font-bold">${b.arrival_time || 'N/A'}</span>
                             </div>
                             <div class="flex justify-between items-center border-t border-gray-100 pt-2 mt-2">
                                 <span class="text-gray-500">Amount</span>
@@ -944,10 +1142,10 @@
             document.getElementById('edit-room').value = booking.room_type;
             document.getElementById('edit-type').value = booking.stay_type;
             document.getElementById('edit-date').value = booking.check_in_date;
-            document.getElementById('edit-time').value = booking.check_in_time || '';
+            document.getElementById('edit-time').value = booking.arrival_time || '';
             document.getElementById('edit-status').value = booking.status;
             document.getElementById('edit-base-price').value = booking.base_price;
-            document.getElementById('edit-discount').value = booking.discount_percentage || 0;
+            document.getElementById('edit-discount').value = booking.discount_percent || 0;
             document.getElementById('edit-amount').value = booking.total_amount;
             document.getElementById('edit-final-amount').textContent = `Rs ${booking.total_amount}`;
             
@@ -1078,9 +1276,9 @@
                 room_type: document.getElementById('b-room').value,
                 stay_type: document.getElementById('b-type').value,
                 check_in_date: document.getElementById('b-date').value,
-                check_in_time: document.getElementById('b-time').value,
+                arrival_time: document.getElementById('b-time').value,
                 base_price: basePrice,
-                discount_percentage: discountPercent,
+                discount_percent: discountPercent,
                 total_amount: finalAmount,
                 payment_status: paymentStatus,
                 status: 'pending',
@@ -1113,10 +1311,10 @@
                 room_type: document.getElementById('edit-room').value,
                 stay_type: document.getElementById('edit-type').value,
                 check_in_date: document.getElementById('edit-date').value,
-                check_in_time: document.getElementById('edit-time').value,
+                arrival_time: document.getElementById('edit-time').value,
                 status: document.getElementById('edit-status').value,
                 base_price: basePrice,
-                discount_percentage: discountPercent,
+                discount_percent: discountPercent,
                 total_amount: finalAmount,
                 payment_status: paymentStatus
             };
