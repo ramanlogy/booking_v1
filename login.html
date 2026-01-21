@@ -1,347 +1,339 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hotel Lumanti | Dashboard</title>
+    <title>Hotel Lumanti | Employee Dashboard Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #fafafa; color: #1d1d1f; }
-        .card { transition: all 0.3s cubic-bezier(0.2, 0, 0, 1); border-radius: 16px; }
-        .card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
-        .btn-primary { background-color: #c9a961; color: white; transition: all 0.2s; }
-        .btn-primary:hover { background-color: #b39452; transform: scale(1.02); }
-        .status-pill { padding: 6px 12px; border-radius: 999px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px; }
-        .tab-active { border-bottom: 3px solid #1d1d1f; color: #1d1d1f; font-weight: 700; }
-        .modal-blur { backdrop-filter: blur(16px); background: rgba(0,0,0,0.4); }
-        .date-chip { transition: all 0.2s cubic-bezier(0.2, 0, 0, 1); cursor: pointer; }
-        .date-chip.active { background: #1d1d1f; color: white; transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-        #video-preview { transform: scaleX(-1); border-radius: 12px; }
-        .payment-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 700; }
-        .paid { background: #d1f4e0; color: #0d894f; }
-        .unpaid { background: #fee; color: #c41e3a; }
-        @keyframes slideIn { from { transform: translateY(-100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .notification-toast { animation: slideIn 0.4s ease-out; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
-        .notification-dot { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        .room-card { border: 2px solid #e5e7eb; position: relative; }
-        .room-card.available { border-color: #10b981; background: #f0fdf4; }
-        .room-card.booked { border-color: #ef4444; background: #fef2f2; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; color: #0f172a; }
+        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); }
+        .card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .card:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); }
+        .btn-primary { background: #c9a961; color: white; transition: all 0.2s; box-shadow: 0 4px 14px 0 rgba(201, 169, 97, 0.39); }
+        .btn-primary:hover { background: #b39452; transform: translateY(-1px); }
+        .date-chip { transition: all 0.2s; cursor: pointer; }
+        .date-chip.active { background: #0f172a; color: white; transform: scale(1.05); }
+        .notification-badge { animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .modal-enter { animation: modalFadeIn 0.3s ease-out; }
+        @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
     </style>
+<script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
+  }
+}
+</script>
 </head>
 <body class="antialiased">
 
     <!-- Login Screen -->
-    <div id="login-screen" class="fixed inset-0 z-[100] flex items-center justify-center bg-white p-4">
-        <div class="w-full max-w-md space-y-8">
-            <div class="text-center mb-12">
-                <h1 class="text-4xl md:text-6xl font-black tracking-tighter text-[#c9a961] mb-3">Lumanti</h1>
-                <p class="text-gray-400 font-medium text-sm">Employee Dashboard</p>
+    <div id="login-screen" class="fixed inset-0 z-[100] flex items-center justify-center bg-white p-6">
+        <div class="w-full max-w-md space-y-8 text-center">
+            <div class="mb-10">
+                <h1 class="text-7xl font-black tracking-tighter text-[#c9a961]">Lumanti</h1>
+                <p class="text-slate-400 font-semibold uppercase tracking-widest text-xs mt-2">Management Portal</p>
             </div>
-            <form id="login-form" class="space-y-4">
-                <input type="email" id="email" placeholder="Email" class="w-full px-5 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#c9a961] focus:border-transparent outline-none transition-all" required>
-                <input type="password" id="password" placeholder="Password" class="w-full px-5 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#c9a961] focus:border-transparent outline-none transition-all" required>
-                <button type="submit" class="w-full py-4 btn-primary rounded-xl font-bold text-base">Sign In</button>
-                <p id="login-error" class="text-red-500 text-sm hidden bg-red-50 py-3 px-4 rounded-xl"></p>
+            <form id="login-form" class="space-y-4 text-left">
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-500 ml-1">WORK EMAIL</label>
+                    <input type="email" id="email" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-[#c9a961] focus:border-transparent outline-none transition-all" placeholder="name@lumanti.com" required>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-500 ml-1">PASSWORD</label>
+                    <input type="password" id="password" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-[#c9a961] focus:border-transparent outline-none transition-all" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="w-full py-4 btn-primary rounded-2xl font-bold text-lg mt-4">Access Dashboard</button>
+                <p id="login-error" class="text-red-500 text-sm hidden bg-red-50 py-3 px-4 rounded-xl border border-red-100"></p>
             </form>
         </div>
     </div>
 
     <!-- Main App -->
-    <div id="app" class="hidden min-h-screen pb-20">
+    <div id="app" class="hidden min-h-screen">
         <!-- Header -->
-        <header class="sticky top-0 z-40 w-full bg-white/80 backdrop-blur-xl border-b border-gray-200 px-4 md:px-6 py-3">
+        <header class="sticky top-0 z-50 w-full glass border-b border-slate-200/50 px-4 md:px-8 py-4">
             <div class="max-w-7xl mx-auto flex items-center justify-between">
-                <div class="flex items-center gap-4 md:gap-10">
-                    <h2 class="text-2xl md:text-3xl font-black text-[#c9a961] tracking-tighter">Lumanti</h2>
-                    <nav class="flex gap-3 md:gap-6">
-                        <button onclick="switchTab('rooms')" class="nav-tab pb-2 text-gray-400 hover:text-black font-semibold transition-all tab-active text-sm md:text-base" id="tab-rooms">Rooms</button>
-                        <button onclick="switchTab('bookings')" class="nav-tab pb-2 text-gray-400 hover:text-black font-semibold transition-all text-sm md:text-base relative" id="tab-bookings">
-                            Bookings
-                            <span id="new-bookings-dot" class="hidden absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full notification-dot"></span>
-                            <span id="new-bookings-count" class="hidden absolute -top-2 -right-6 md:-right-8 px-2 py-0.5 bg-red-500 text-white text-xs rounded-full font-bold min-w-[20px] text-center">0</span>
-                        </button>
+                <div class="flex items-center gap-8">
+                    <h2 class="text-3xl font-black text-[#c9a961] tracking-tighter">Lumanti</h2>
+                    <nav class="hidden md:flex items-center gap-1">
+                        <button onclick="switchTab('bookings')" id="tab-bookings" class="px-4 py-2 rounded-xl text-sm font-bold transition-all text-slate-900 bg-slate-100">Bookings</button>
+                        <button onclick="switchTab('insights')" id="tab-insights" class="px-4 py-2 rounded-xl text-sm font-bold transition-all text-slate-500 hover:text-slate-900">Insights</button>
                     </nav>
                 </div>
-                <div class="flex items-center gap-2">
-                    <button onclick="openQRScanner()" class="p-2 md:p-3 bg-[#c9a961] text-white rounded-xl hover:bg-[#b39452] transition-all" title="Scan Guest QR">
+                <div class="flex items-center gap-3">
+                    <div class="relative">
+                        <button onclick="toggleNotifications()" class="p-3 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-all">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                        </button>
+                        <span id="notif-count" class="hidden absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white notification-badge">0</span>
+                        
+                        <!-- Notification Dropdown -->
+                        <div id="notif-dropdown" class="hidden absolute right-0 mt-3 w-80 bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden z-50">
+                            <div class="p-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+                                <span class="font-bold text-sm">Notifications</span>
+                                <button onclick="clearNotifs()" class="text-[10px] font-bold text-[#c9a961] uppercase tracking-wider">Clear All</button>
+                            </div>
+                            <div id="notif-list" class="max-h-96 overflow-y-auto p-2 space-y-1">
+                                <p class="text-center py-8 text-slate-400 text-xs">No new notifications</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="openQRScanner()" class="p-3 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-all shadow-lg" title="Scan Guest QR">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
                     </button>
-                    <button onclick="logout()" class="p-2 md:p-3 text-gray-400 hover:text-red-500 rounded-xl hover:bg-red-50 transition-all">
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                    </button>
+                    <button onclick="openBookingModal()" class="px-6 py-3 btn-primary rounded-xl text-sm font-bold">+ New Booking</button>
                 </div>
             </div>
         </header>
 
-        <!-- Notification Toasts -->
-        <div id="notification-container" class="fixed top-20 left-4 right-4 md:left-auto md:right-6 z-50 space-y-3 max-w-sm md:max-w-md mx-auto md:mx-0"></div>
-
-        <main class="max-w-7xl mx-auto p-3 md:p-6 space-y-4 md:space-y-6">
+        <main class="max-w-7xl mx-auto p-4 md:p-8 space-y-8">
             
-            <!-- Rooms Availability Section -->
-            <section id="content-rooms" class="space-y-4 md:space-y-6">
-                <!-- Date Selector -->
-                <div class="bg-white rounded-2xl p-4 md:p-5 border border-gray-200 space-y-4">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <h3 class="text-lg md:text-xl font-bold">Select Date</h3>
-                        <input type="date" onchange="selectDate(this.value)" class="text-sm border border-gray-200 rounded-lg px-3 py-2">
+            <!-- Bookings Section -->
+            <section id="content-bookings" class="space-y-8">
+                <!-- Inventory / Quick Status -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white p-6 rounded-3xl border border-slate-200 flex flex-col justify-between">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Available Total</span>
+                        <div class="flex items-baseline gap-2 mt-2">
+                            <span id="stat-total-avail" class="text-4xl font-black text-slate-900">0</span>
+                            <span class="text-slate-400 text-sm">/ 15 rooms</span>
+                        </div>
                     </div>
-                    <div class="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1" id="date-selector"></div>
+                    <div class="bg-white p-6 rounded-3xl border border-slate-200 flex flex-col justify-between">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Occupancy</span>
+                        <div class="mt-2">
+                            <div class="flex justify-between items-center mb-1">
+                                <span id="stat-occupancy-percent" class="text-2xl font-black text-[#c9a961]">0%</span>
+                            </div>
+                            <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                <div id="stat-occupancy-bar" class="h-full bg-[#c9a961] transition-all duration-700" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-3xl border border-slate-200 flex flex-col justify-between">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Check-ins</span>
+                        <span id="stat-active" class="text-4xl font-black text-emerald-600 mt-2">0</span>
+                    </div>
+                    <div class="bg-white p-6 rounded-3xl border border-slate-200 flex flex-col justify-between">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pending Arrivals</span>
+                        <span id="stat-pending" class="text-4xl font-black text-amber-500 mt-2">0</span>
+                    </div>
                 </div>
 
-                <!-- Full Stay Rooms -->
-                <div class="bg-white rounded-2xl p-4 md:p-5 border-2 border-purple-300">
-                    <div class="flex items-center justify-between mb-4">
+                <!-- Date Navigation -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xl font-black">Daily Schedule</h3>
                         <div class="flex items-center gap-3">
-                            <div class="text-3xl">🏨</div>
-                            <h3 class="text-lg md:text-xl font-black text-purple-600">FULL STAY</h3>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-xs text-gray-500 font-bold mb-1">AVAILABLE</div>
-                            <div class="text-3xl md:text-4xl font-black text-purple-600" id="fullstay-available">14</div>
+                            <label class="text-xs font-bold text-slate-500">JUMP TO</label>
+                            <input type="date" id="date-picker-manual" onchange="selectDate(this.value)" class="bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold focus:ring-2 focus:ring-[#c9a961] outline-none">
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <div class="bg-purple-50 rounded-xl p-3 text-center border border-purple-200">
-                            <div class="text-xs text-gray-500 font-bold mb-1">Mini (3)</div>
-                            <div class="text-2xl font-black text-purple-600" id="fullstay-mini">3</div>
+                    <div id="date-scroll" class="flex gap-3 overflow-x-auto pb-4 no-scrollbar">
+                        <!-- Dates injected here -->
+                    </div>
+                </div>
+
+                <!-- Room Type Inventory Breakdowns -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="p-4 bg-slate-900 text-white rounded-3xl">
+                        <p class="text-[10px] font-bold text-slate-400 mb-2 uppercase">Mini Rooms (5)</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs">Available</span>
+                            <span id="inv-mini" class="text-2xl font-black">0</span>
                         </div>
-                        <div class="bg-purple-50 rounded-xl p-3 text-center border border-purple-200">
-                            <div class="text-xs text-gray-500 font-bold mb-1">Classic (6)</div>
-                            <div class="text-2xl font-black text-purple-600" id="fullstay-classic">6</div>
+                    </div>
+                    <div class="p-4 bg-white border border-slate-200 rounded-3xl">
+                        <p class="text-[10px] font-bold text-slate-400 mb-2 uppercase">Classic (4)</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs">Available</span>
+                            <span id="inv-classic" class="text-2xl font-black">0</span>
                         </div>
-                        <div class="bg-purple-50 rounded-xl p-3 text-center border border-purple-200">
-                            <div class="text-xs text-gray-500 font-bold mb-1">Deluxe (3)</div>
-                            <div class="text-2xl font-black text-purple-600" id="fullstay-deluxe">3</div>
+                    </div>
+                    <div class="p-4 bg-white border border-slate-200 rounded-3xl">
+                        <p class="text-[10px] font-bold text-slate-400 mb-2 uppercase">Deluxe (4)</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs">Available</span>
+                            <span id="inv-deluxe" class="text-2xl font-black">0</span>
                         </div>
-                        <div class="bg-purple-50 rounded-xl p-3 text-center border border-purple-200">
-                            <div class="text-xs text-gray-500 font-bold mb-1">Suite (2)</div>
-                            <div class="text-2xl font-black text-purple-600" id="fullstay-suite">2</div>
+                    </div>
+                    <div class="p-4 bg-white border border-slate-200 rounded-3xl">
+                        <p class="text-[10px] font-bold text-slate-400 mb-2 uppercase">Suite (2)</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs">Available</span>
+                            <span id="inv-suite" class="text-2xl font-black">0</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Daycation Rooms -->
-                <div class="bg-white rounded-2xl p-4 md:p-5 border-2 border-orange-300">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center gap-3">
-                            <div class="text-3xl">☀️</div>
-                            <h3 class="text-lg md:text-xl font-black text-orange-600">DAYCATION</h3>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-xs text-gray-500 font-bold mb-1">AVAILABLE</div>
-                            <div class="text-3xl md:text-4xl font-black text-orange-600" id="daycation-available">14</div>
-                        </div>
+                <!-- List Controls -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex items-center gap-2 bg-slate-100 p-1 rounded-2xl w-fit">
+                        <button onclick="setFilter('all')" id="f-all" class="px-6 py-2 rounded-xl text-xs font-black transition-all bg-white shadow-sm">All</button>
+                        <button onclick="setFilter('pending')" id="f-pending" class="px-6 py-2 rounded-xl text-xs font-black transition-all text-slate-500 hover:bg-white">Pending</button>
+                        <button onclick="setFilter('checked-in')" id="f-checked-in" class="px-6 py-2 rounded-xl text-xs font-black transition-all text-slate-500 hover:bg-white">Active</button>
                     </div>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <div class="bg-orange-50 rounded-xl p-3 text-center border border-orange-200">
-                            <div class="text-xs text-gray-500 font-bold mb-1">Mini (3)</div>
-                            <div class="text-2xl font-black text-orange-600" id="daycation-mini">3</div>
-                        </div>
-                        <div class="bg-orange-50 rounded-xl p-3 text-center border border-orange-200">
-                            <div class="text-xs text-gray-500 font-bold mb-1">Classic (6)</div>
-                            <div class="text-2xl font-black text-orange-600" id="daycation-classic">6</div>
-                        </div>
-                        <div class="bg-orange-50 rounded-xl p-3 text-center border border-orange-200">
-                            <div class="text-xs text-gray-500 font-bold mb-1">Deluxe (3)</div>
-                            <div class="text-2xl font-black text-orange-600" id="daycation-deluxe">3</div>
-                        </div>
-                        <div class="bg-orange-50 rounded-xl p-3 text-center border border-orange-200">
-                            <div class="text-xs text-gray-500 font-bold mb-1">Suite (2)</div>
-                            <div class="text-2xl font-black text-orange-600" id="daycation-suite">2</div>
-                        </div>
+                    <div class="relative w-full md:w-80">
+                        <input type="text" id="booking-search" oninput="handleSearch()" placeholder="Search guest name or phone..." class="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-[#c9a961] outline-none">
+                        <svg class="w-5 h-5 absolute left-4 top-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </div>
                 </div>
 
-                <!-- Staycation Rooms -->
-                <div class="bg-white rounded-2xl p-4 md:p-5 border-2 border-indigo-300">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center gap-3">
-                            <div class="text-3xl">🌙</div>
-                            <h3 class="text-lg md:text-xl font-black text-indigo-600">STAYCATION</h3>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-xs text-gray-500 font-bold mb-1">AVAILABLE</div>
-                            <div class="text-3xl md:text-4xl font-black text-indigo-600" id="staycation-available">14</div>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <div class="bg-indigo-50 rounded-xl p-3 text-center border border-indigo-200">
-                            <div class="text-xs text-gray-500 font-bold mb-1">Mini (3)</div>
-                            <div class="text-2xl font-black text-indigo-600" id="staycation-mini">3</div>
-                        </div>
-                        <div class="bg-indigo-50 rounded-xl p-3 text-center border border-indigo-200">
-                            <div class="text-xs text-gray-500 font-bold mb-1">Classic (6)</div>
-                            <div class="text-2xl font-black text-indigo-600" id="staycation-classic">6</div>
-                        </div>
-                        <div class="bg-indigo-50 rounded-xl p-3 text-center border border-indigo-200">
-                            <div class="text-xs text-gray-500 font-bold mb-1">Deluxe (3)</div>
-                            <div class="text-2xl font-black text-indigo-600" id="staycation-deluxe">3</div>
-                        </div>
-                        <div class="bg-indigo-50 rounded-xl p-3 text-center border border-indigo-200">
-                            <div class="text-xs text-gray-500 font-bold mb-1">Suite (2)</div>
-                            <div class="text-2xl font-black text-indigo-600" id="staycation-suite">2</div>
-                        </div>
-                    </div>
+                <!-- Bookings Grid -->
+                <div id="bookings-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Cards injected here -->
                 </div>
-
-                <!-- Quick Add Button -->
-                <button onclick="openBookingModal()" class="w-full py-4 bg-black text-white rounded-xl text-base font-bold hover:bg-zinc-800 transition-all">
-                    + New Booking
-                </button>
             </section>
 
-            <!-- Bookings List Section -->
-            <section id="content-bookings" class="hidden space-y-4 md:space-y-6">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                    <h3 class="text-xl md:text-2xl font-black">All Bookings</h3>
-                    <div class="flex gap-2 bg-gray-100 rounded-xl p-1 w-full sm:w-auto">
-                        <button onclick="filterBookings('all')" class="flex-1 sm:flex-none px-3 md:px-4 py-2 text-xs font-bold rounded-lg filter-btn bg-white shadow-sm" id="filter-all">All</button>
-                        <button onclick="filterBookings('pending')" class="flex-1 sm:flex-none px-3 md:px-4 py-2 text-xs font-bold rounded-lg filter-btn text-gray-500" id="filter-pending">Pending</button>
-                        <button onclick="filterBookings('checked-in')" class="flex-1 sm:flex-none px-3 md:px-4 py-2 text-xs font-bold rounded-lg filter-btn text-gray-500" id="filter-checked-in">Active</button>
+            <!-- Insights Section -->
+            <section id="content-insights" class="hidden space-y-8">
+                <h3 class="text-3xl font-black tracking-tight">Business Intelligence</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white p-8 rounded-[2rem] border border-slate-200">
+                        <p class="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Projected Revenue</p>
+                        <p class="text-5xl font-black text-slate-900" id="ins-revenue">Rs 0</p>
+                        <p class="text-xs text-emerald-600 font-bold mt-2">↑ Up 12% from last week</p>
+                    </div>
+                    <div class="bg-white p-8 rounded-[2rem] border border-slate-200">
+                        <p class="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Total Bookings</p>
+                        <p class="text-5xl font-black text-slate-900" id="ins-count">0</p>
+                        <p class="text-xs text-slate-400 font-bold mt-2">Lifetime reservations</p>
+                    </div>
+                    <div class="bg-white p-8 rounded-[2rem] border border-slate-200">
+                        <p class="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Top Room Category</p>
+                        <p class="text-5xl font-black text-slate-900" id="ins-top-room">—</p>
+                        <p class="text-xs text-slate-400 font-bold mt-2">Based on volume</p>
                     </div>
                 </div>
 
-                <div id="bookings-grid" class="space-y-3">
-                    <div class="col-span-full py-16 text-center text-gray-400 text-sm">Loading...</div>
+                <div class="bg-white p-8 rounded-[2rem] border border-slate-200">
+                    <h4 class="text-lg font-black mb-6">Revenue Breakdown by Package</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8" id="ins-package-breakdown">
+                        <!-- Stats here -->
+                    </div>
                 </div>
             </section>
         </main>
     </div>
 
     <!-- QR Scanner Modal -->
-    <div id="qr-scanner-modal" class="fixed inset-0 z-[80] hidden items-center justify-center p-4 modal-blur">
-        <div class="bg-white w-full max-w-md rounded-3xl p-6 md:p-8 shadow-2xl relative">
-            <button onclick="closeQRScanner()" class="absolute top-3 right-3 md:top-5 md:right-5 p-2 text-gray-400 hover:text-black">
+    <div id="qr-modal" class="fixed inset-0 z-[110] hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xl">
+        <div class="bg-white w-full max-w-lg rounded-[2.5rem] p-10 shadow-2xl modal-enter relative">
+            <button onclick="closeModals()" class="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-900">
                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
-            <h3 class="text-xl md:text-2xl font-black mb-6 text-center">Scan Guest QR</h3>
-            <div id="qr-reader" class="rounded-2xl overflow-hidden mb-4"></div>
-            <p class="text-center text-sm text-gray-400">Position QR code within frame</p>
+            <div class="text-center mb-8">
+                <h3 class="text-2xl font-black">Scan Guest QR</h3>
+                <p class="text-slate-500 text-sm mt-1">Check-in guests instantly by scanning their ID</p>
+            </div>
+            <div id="qr-reader" class="rounded-3xl overflow-hidden border-4 border-slate-100 shadow-inner aspect-square bg-slate-50"></div>
         </div>
     </div>
 
-    <!-- Booking Edit Modal -->
-    <div id="booking-modal" class="fixed inset-0 z-[70] hidden items-center justify-center p-4 modal-blur overflow-y-auto">
-        <div class="bg-white w-full max-w-3xl rounded-3xl p-6 md:p-8 shadow-2xl my-8">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl md:text-2xl font-black" id="modal-title">New Booking</h3>
-                <button onclick="closeModals()" class="p-2 text-gray-400 hover:text-black">
-                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
-            </div>
+    <!-- Multi-purpose Booking Modal -->
+    <div id="booking-modal" class="fixed inset-0 z-[105] hidden items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md overflow-y-auto">
+        <div class="bg-white w-full max-w-4xl rounded-[2.5rem] p-8 md:p-12 shadow-2xl modal-enter my-8 relative">
+            <button onclick="closeModals()" class="absolute top-8 right-8 p-3 bg-slate-50 rounded-full text-slate-400 hover:text-slate-900 transition-all">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
             
-            <form id="booking-form" class="space-y-4 md:space-y-6">
-                <input type="hidden" id="edit-booking-id">
+            <h3 class="text-3xl font-black mb-8" id="modal-title">New Reservation</h3>
+            
+            <form id="booking-form" class="space-y-8">
+                <input type="hidden" id="edit-id">
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
-                    <div>
-                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Guest Name</label>
-                        <input type="text" id="b-name" placeholder="John Doe" class="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-[#c9a961] outline-none" required>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-6">
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">GUEST NAME</label>
+                            <input type="text" id="b-name" class="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-[#c9a961] outline-none font-bold" placeholder="e.g. John Wick" required>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">PHONE NUMBER</label>
+                            <input type="tel" id="b-phone" class="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-[#c9a961] outline-none font-bold" placeholder="+977 98..." required>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">ROOM TYPE</label>
+                                <select id="b-room" class="w-full px-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-[#c9a961] outline-none font-bold">
+                                    <option value="Mini">Mini Room</option>
+                                    <option value="Classic">Classic Room</option>
+                                    <option value="Deluxe">Deluxe Room</option>
+                                    <option value="Suite">Suite Room</option>
+                                </select>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">PACKAGE</label>
+                                <select id="b-type" class="w-full px-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-[#c9a961] outline-none font-bold">
+                                    <option value="Daycation">Daycation</option>
+                                    <option value="Staycation">Staycation</option>
+                                    <option value="Full Stay">Full Stay</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Phone</label>
-                        <input type="tel" id="b-phone" placeholder="+977 98..." class="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-[#c9a961] outline-none" required>
-                    </div>
-                    <div>
-                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Room Type</label>
-                        <select id="b-room" class="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-[#c9a961] outline-none">
-                            <option value="Mini">Mini Room</option>
-                            <option value="Deluxe">Deluxe Room</option>
-                            <option value="Classic">Classic Room</option>
-                            <option value="Suite">Suite Room</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Package</label>
-                        <select id="b-type" class="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-[#c9a961] outline-none">
-                            <option value="Daycation">Daycation (12PM - 5PM)</option>
-                            <option value="Staycation">Staycation (7PM - 12AM)</option>
-                            <option value="Full Stay">Full Stay (24 hrs)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Check-in Date</label>
-                        <input type="date" id="b-date" class="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-[#c9a961] outline-none" required>
-                    </div>
-                    <div>
-                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Time</label>
-                        <input type="time" id="b-time" class="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-[#c9a961] outline-none" required>
+
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">CHECK-IN DATE</label>
+                                <input type="date" id="b-date" class="w-full px-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-[#c9a961] outline-none font-bold" required>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">EST. TIME</label>
+                                <input type="time" id="b-time" class="w-full px-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-[#c9a961] outline-none font-bold">
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">BOOKING STATUS</label>
+                            <select id="b-status" class="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-[#c9a961] outline-none font-bold">
+                                <option value="pending">Pending Arrival</option>
+                                <option value="checked-in">Checked In</option>
+                                <option value="checked-out">Checked Out</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                        <div class="p-6 bg-[#c9a961]/5 border border-[#c9a961]/10 rounded-3xl space-y-4">
+                            <div class="flex justify-between items-center">
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">BILLING TOTAL</label>
+                                <input type="number" id="b-amount" class="w-32 bg-white px-3 py-2 rounded-xl text-right font-black text-lg outline-none focus:ring-2 focus:ring-[#c9a961]" placeholder="0">
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">PAYMENT</label>
+                                <div class="flex gap-2">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" name="pay-status" value="paid" class="w-4 h-4 accent-[#c9a961]">
+                                        <span class="text-xs font-bold">Paid</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" name="pay-status" value="unpaid" class="w-4 h-4 accent-[#c9a961]" checked>
+                                        <span class="text-xs font-bold">Unpaid</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Status (Only for Edit) -->
-                <div id="status-section" class="hidden">
-                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-3">Status</label>
-                    <select id="b-status" class="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-[#c9a961] outline-none">
-                        <option value="pending">Pending</option>
-                        <option value="checked-in">Checked In</option>
-                        <option value="checked-out">Checked Out</option>
-                        <option value="cancelled">Cancelled</option>
-                    </select>
-                </div>
-
-                <!-- Pricing -->
-                <div class="bg-gray-50 rounded-2xl p-4 md:p-5 space-y-4">
-                    <div class="flex justify-between items-center">
-                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Base Price (NPR)</label>
-                        <input type="number" id="b-base-price" placeholder="5000" class="w-32 p-2 text-right bg-white rounded-lg border-none focus:ring-2 focus:ring-[#c9a961] outline-none font-bold" required>
-                    </div>
-                    <div class="grid grid-cols-4 gap-2">
-                        <button type="button" onclick="applyDiscount(10)" class="py-2 bg-white rounded-lg text-xs font-bold hover:bg-gray-200 transition-all">10%</button>
-                        <button type="button" onclick="applyDiscount(20)" class="py-2 bg-white rounded-lg text-xs font-bold hover:bg-gray-200 transition-all">20%</button>
-                        <button type="button" onclick="applyDiscount(30)" class="py-2 bg-white rounded-lg text-xs font-bold hover:bg-gray-200 transition-all">30%</button>
-                        <button type="button" onclick="clearDiscount()" class="py-2 bg-white rounded-lg text-xs font-bold hover:bg-gray-200 transition-all">Clear</button>
-                    </div>
-                    <div class="flex justify-between items-center pt-3 border-t border-gray-200">
-                        <span class="font-bold">Final Amount</span>
-                        <span class="text-xl md:text-2xl font-black" id="final-amount">Rs 0</span>
-                    </div>
-                    <input type="hidden" id="b-discount" value="0">
-                    <input type="hidden" id="b-amount" value="0">
-                </div>
-
-                <!-- Payment Status -->
-                <div>
-                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-3">Payment</label>
-                    <div class="grid grid-cols-2 gap-3">
-                        <label class="flex items-center gap-3 p-4 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-all">
-                            <input type="radio" name="payment-status" value="paid" class="w-5 h-5 text-[#c9a961]">
-                            <span class="font-bold text-sm">Paid</span>
-                        </label>
-                        <label class="flex items-center gap-3 p-4 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-all">
-                            <input type="radio" name="payment-status" value="unpaid" class="w-5 h-5 text-[#c9a961]" checked>
-                            <span class="font-bold text-sm">Unpaid</span>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Document Upload (Only for New) -->
-                <div id="document-section">
-                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Document (Optional)</label>
-                    <input type="file" id="b-document" accept="image/*,.pdf" class="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-[#c9a961] outline-none text-sm">
-                </div>
-
-                <div class="flex gap-3 pt-4">
-                    <button type="button" id="delete-btn" onclick="deleteBooking()" class="hidden px-4 md:px-6 py-3 bg-red-50 text-red-600 rounded-xl font-bold hover:bg-red-100 transition-all">Delete</button>
-                    <button type="button" onclick="closeModals()" class="flex-1 py-3 bg-gray-100 rounded-xl font-bold hover:bg-gray-200 transition-all">Cancel</button>
-                    <button type="submit" class="flex-[2] py-3 btn-primary rounded-xl font-bold">Save</button>
+                <div class="flex flex-col md:flex-row gap-4 pt-6 border-t border-slate-100">
+                    <button type="button" onclick="deleteBooking()" id="btn-delete" class="hidden px-8 py-4 bg-red-50 text-red-600 rounded-2xl font-bold hover:bg-red-100 transition-all">Delete</button>
+                    <button type="button" onclick="closeModals()" class="flex-1 py-4 bg-slate-100 text-slate-900 rounded-2xl font-bold hover:bg-slate-200 transition-all">Cancel</button>
+                    <button type="submit" class="flex-[2] py-4 btn-primary rounded-2xl font-bold text-lg">Commit Booking</button>
                 </div>
             </form>
-        </div>
-    </div>
-
-    <!-- Document Viewer Modal -->
-    <div id="document-viewer-modal" class="fixed inset-0 z-[90] hidden items-center justify-center p-4 modal-blur">
-        <div class="bg-white w-full max-w-4xl rounded-3xl p-6 shadow-2xl relative max-h-[90vh] overflow-auto">
-            <button onclick="closeDocumentViewer()" class="absolute top-5 right-5 p-2 bg-white rounded-full shadow-lg text-gray-400 hover:text-black z-10">
-                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-            <img id="document-image" src="" alt="Document" class="w-full h-auto rounded-2xl">
         </div>
     </div>
 
@@ -351,30 +343,41 @@
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let allBookings = [];
+        let unreadBookings = [];
         let currentFilter = 'all';
+        let searchQuery = '';
         let selectedDate = new Date().toISOString().split('T')[0];
         let qrScanner = null;
-        let seenBookingIds = new Set();
-        let realtimeChannel = null;
-        const ROOM_CAPACITY = {
-            'Mini': 3,
-            'Classic': 6,
-            'Deluxe': 3,
-            'Suite': 2
-        };
-        const TOTAL_ROOMS = 14;
 
-        // Auth
+        const ROOM_CAPACITY = {
+            Mini: 5,
+            Classic: 4,
+            Deluxe: 4,
+            Suite: 2
+        };
+        const TOTAL_CAPACITY = 15;
+
+        // Auth handling
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const btn = e.target.querySelector('button');
+            btn.textContent = 'Verifying...';
+            btn.disabled = true;
+
             const { error } = await supabase.auth.signInWithPassword({
                 email: document.getElementById('email').value,
                 password: document.getElementById('password').value
             });
+
             if (error) {
-                document.getElementById('login-error').textContent = error.message;
-                document.getElementById('login-error').classList.remove('hidden');
-            } else checkSession();
+                const errBox = document.getElementById('login-error');
+                errBox.textContent = error.message;
+                errBox.classList.remove('hidden');
+                btn.textContent = 'Access Dashboard';
+                btn.disabled = false;
+            } else {
+                checkSession();
+            }
         });
 
         window.checkSession = async () => {
@@ -382,468 +385,363 @@
             if (session) {
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('app').classList.remove('hidden');
-                initializeDateSelector();
-                await loadData();
-                setupRealtimeSubscription();
-                loadSeenBookings();
-            } else {
-                document.getElementById('login-screen').classList.remove('hidden');
-                document.getElementById('app').classList.add('hidden');
+                initDateNav();
+                loadData();
+                setupRealtime();
             }
         };
 
-        window.logout = async () => {
-            if (realtimeChannel) supabase.removeChannel(realtimeChannel);
-            await supabase.auth.signOut();
-            window.location.reload();
-        };
-
-        // Realtime
-        function setupRealtimeSubscription() {
-            realtimeChannel = supabase.channel('bookings-changes')
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'bookings' }, (payload) => {
-                    showNotification('New Booking!', `${payload.new.full_name} booked ${payload.new.room_type}`);
+        // Real-time updates
+        function setupRealtime() {
+            supabase.channel('custom-all-channel')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, (payload) => {
+                    if (payload.eventType === 'INSERT') {
+                        addNotification(payload.new);
+                    }
                     loadData();
                 })
-                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'bookings' }, () => loadData())
-                .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'bookings' }, () => loadData())
                 .subscribe();
         }
 
-        // Notifications
-        function showNotification(title, message) {
-            const container = document.getElementById('notification-container');
-            const notification = document.createElement('div');
-            notification.className = 'notification-toast bg-white rounded-2xl p-4 shadow-2xl border-l-4 border-[#c9a961] flex items-start gap-3';
-            notification.innerHTML = `
-                <div class="w-10 h-10 bg-[#c9a961] rounded-full flex items-center justify-center flex-shrink-0">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                </div>
-                <div class="flex-1">
-                    <p class="font-bold text-sm">${title}</p>
-                    <p class="text-xs text-gray-500 mt-1">${message}</p>
-                </div>
-                <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-black">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            `;
-            container.appendChild(notification);
-            setTimeout(() => notification.remove(), 5000);
+        function addNotification(booking) {
+            unreadBookings.push(booking);
+            updateNotifUI();
         }
 
-        // Badge Management
-        function loadSeenBookings() {
-            const saved = localStorage.getItem('seenBookings');
-            if (saved) seenBookingIds = new Set(JSON.parse(saved));
-            updateBadge();
-        }
+        window.toggleNotifications = () => {
+            document.getElementById('notif-dropdown').classList.toggle('hidden');
+        };
 
-        function updateBadge() {
-            const unseenCount = allBookings.filter(b => !seenBookingIds.has(b.id)).length;
-            const dot = document.getElementById('new-bookings-dot');
-            const count = document.getElementById('new-bookings-count');
+        function updateNotifUI() {
+            const count = unreadBookings.length;
+            const badge = document.getElementById('notif-count');
+            const list = document.getElementById('notif-list');
             
-            if (unseenCount > 0) {
-                dot.classList.remove('hidden');
-                count.classList.remove('hidden');
-                count.textContent = unseenCount;
+            if (count > 0) {
+                badge.textContent = count;
+                badge.classList.remove('hidden');
+                list.innerHTML = unreadBookings.map((b, i) => `
+                    <div onclick="openFromNotif('${b.id}', ${i})" class="p-3 hover:bg-slate-50 cursor-pointer rounded-2xl flex items-start gap-3 transition-all">
+                        <div class="w-8 h-8 rounded-full bg-[#c9a961]/10 flex items-center justify-center flex-shrink-0">
+                            <span class="text-[#c9a961] font-bold text-xs">+</span>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold">${b.full_name} booked a ${b.room_type}</p>
+                            <p class="text-[10px] text-slate-400 mt-0.5">For ${b.check_in_date}</p>
+                        </div>
+                    </div>
+                `).join('');
             } else {
-                dot.classList.add('hidden');
-                count.classList.add('hidden');
+                badge.classList.add('hidden');
+                list.innerHTML = `<p class="text-center py-8 text-slate-400 text-xs">No new notifications</p>`;
             }
         }
 
-        function markAllAsSeen() {
-            allBookings.forEach(b => seenBookingIds.add(b.id));
-            localStorage.setItem('seenBookings', JSON.stringify([...seenBookingIds]));
-            updateBadge();
-        }
+        window.openFromNotif = (id, index) => {
+            unreadBookings.splice(index, 1);
+            updateNotifUI();
+            document.getElementById('notif-dropdown').classList.add('hidden');
+            openBookingModal(id);
+        };
 
-        // Date Selector
-        function initializeDateSelector() {
-            const container = document.getElementById('date-selector');
+        window.clearNotifs = () => {
+            unreadBookings = [];
+            updateNotifUI();
+        };
+
+        // Date Logic
+        function initDateNav() {
+            const container = document.getElementById('date-scroll');
             const today = new Date();
-            const dates = [];
+            let html = '';
             
-            for (let i = -7; i <= 30; i++) {
-                const date = new Date(today);
-                date.setDate(today.getDate() + i);
-                dates.push(date);
-            }
-
-            container.innerHTML = dates.map((date, i) => {
-                const dateStr = date.toISOString().split('T')[0];
-                const isToday = i === 7;
-                const label = isToday ? 'Today' : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                const active = dateStr === selectedDate ? 'active' : '';
+            for (let i = -5; i < 30; i++) {
+                const d = new Date(today);
+                d.setDate(today.getDate() + i);
+                const ds = d.toISOString().split('T')[0];
+                const active = ds === selectedDate ? 'active' : '';
+                const label = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' });
                 
-                return `<button onclick="selectDate('${dateStr}')" class="date-chip ${active} flex-shrink-0 px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs md:text-sm font-bold whitespace-nowrap">${label}</button>`;
-            }).join('');
-
-            setTimeout(() => {
-                const active = document.querySelector('.date-chip.active');
-                if (active) active.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-            }, 50);
+                html += `<div onclick="selectDate('${ds}')" class="date-chip ${active} flex-shrink-0 px-6 py-4 bg-white border border-slate-200 rounded-[1.5rem] flex flex-col items-center">
+                    <span class="text-[10px] font-black uppercase tracking-widest opacity-60">${d.toLocaleDateString('en-US', { month: 'short' })}</span>
+                    <span class="text-lg font-black mt-1">${label}</span>
+                </div>`;
+            }
+            container.innerHTML = html;
+            document.getElementById('date-picker-manual').value = selectedDate;
         }
 
         window.selectDate = (date) => {
             selectedDate = date;
-            initializeDateSelector();
-            updateRoomStats();
+            initDateNav();
+            renderAll();
         };
 
-        // Data Loading
+        // Data Management
         async function loadData() {
             const { data, error } = await supabase.from('bookings').select('*').order('created_at', { ascending: false });
-            if (error) {
-                console.error(error);
-                return;
+            if (!error) {
+                allBookings = data;
+                renderAll();
             }
-            allBookings = data || [];
-            updateRoomStats();
+        }
+
+        function renderAll() {
+            updateInventory();
             renderBookings();
-            updateBadge();
+            renderInsights();
         }
 
-        function updateRoomStats() {
-            const bookings = allBookings.filter(b =>
-                b.check_in_date === selectedDate &&
-                (b.status === 'pending' || b.status === 'checked-in')
-            );
-
-            // Calculate available rooms by stay type and room type
-            const stayTypes = ['Full Stay', 'Daycation', 'Staycation'];
-            const roomTypes = ['Mini', 'Classic', 'Deluxe', 'Suite'];
-
-            stayTypes.forEach(stayType => {
-                let totalAvailable = 0;
-                
-                roomTypes.forEach(roomType => {
-                    const booked = bookings.filter(b => 
-                        b.stay_type === stayType && b.room_type === roomType
-                    ).length;
-                    const available = ROOM_CAPACITY[roomType] - booked;
-                    totalAvailable += available;
-                    
-                    const stayTypeKey = stayType.toLowerCase().replace(' ', '');
-                    const roomTypeKey = roomType.toLowerCase();
-                    const elementId = `${stayTypeKey}-${roomTypeKey}`;
-                    const element = document.getElementById(elementId);
-                    if (element) {
-                        element.textContent = available;
-                        // Color code: green if available, red if none
-                        element.parentElement.classList.toggle('opacity-50', available === 0);
-                    }
-                });
-
-                // Update total available for this stay type
-                const stayTypeKey = stayType.toLowerCase().replace(' ', '');
-                const totalElement = document.getElementById(`${stayTypeKey}-available`);
-                if (totalElement) {
-                    totalElement.textContent = totalAvailable;
-                }
+        function updateInventory() {
+            const bookingsOnDate = allBookings.filter(b => b.check_in_date === selectedDate && b.status !== 'cancelled' && b.status !== 'checked-out');
+            
+            const used = { Mini: 0, Classic: 0, Deluxe: 0, Suite: 0 };
+            bookingsOnDate.forEach(b => {
+                if (used[b.room_type] !== undefined) used[b.room_type]++;
             });
+
+            Object.keys(ROOM_CAPACITY).forEach(type => {
+                const avail = ROOM_CAPACITY[type] - used[type];
+                document.getElementById(`inv-${type.toLowerCase()}`).textContent = Math.max(0, avail);
+                document.getElementById(`inv-${type.toLowerCase()}`).parentElement.parentElement.className = 
+                    avail <= 0 ? 'p-4 bg-red-50 border border-red-100 rounded-3xl opacity-60' : 
+                    avail <= 1 ? 'p-4 bg-amber-50 border border-amber-100 rounded-3xl' : 
+                    'p-4 bg-white border border-slate-200 rounded-3xl';
+            });
+
+            const totalUsed = Object.values(used).reduce((a, b) => a + b, 0);
+            const totalAvail = TOTAL_CAPACITY - totalUsed;
+            const occPercent = Math.round((totalUsed / TOTAL_CAPACITY) * 100);
+
+            document.getElementById('stat-total-avail').textContent = totalAvail;
+            document.getElementById('stat-occupancy-percent').textContent = `${occPercent}%`;
+            document.getElementById('stat-occupancy-bar').style.width = `${occPercent}%`;
+            document.getElementById('stat-active').textContent = bookingsOnDate.filter(b => b.status === 'checked-in').length;
+            document.getElementById('stat-pending').textContent = bookingsOnDate.filter(b => b.status === 'pending').length;
         }
 
-        // Render Bookings
         function renderBookings() {
             const grid = document.getElementById('bookings-grid');
-            let filtered = allBookings;
+            let filtered = allBookings.filter(b => b.check_in_date === selectedDate);
             
             if (currentFilter !== 'all') {
                 filtered = filtered.filter(b => b.status === currentFilter);
             }
+            
+            if (searchQuery) {
+                filtered = filtered.filter(b => 
+                    b.full_name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                    b.phone_number.includes(searchQuery)
+                );
+            }
 
             if (filtered.length === 0) {
-                grid.innerHTML = `<div class="py-16 text-center text-gray-400 text-sm">No bookings found</div>`;
+                grid.innerHTML = `<div class="col-span-full py-20 text-center text-slate-400">
+                    <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <p class="font-bold">No bookings found for this criteria</p>
+                </div>`;
                 return;
             }
 
-            grid.innerHTML = filtered.map(b => {
-                const statusStyles = {
-                    'pending': 'bg-amber-500 text-white',
-                    'checked-in': 'bg-emerald-500 text-white',
-                    'checked-out': 'bg-gray-400 text-white',
-                    'cancelled': 'bg-red-500 text-white'
-                };
-
-                const paymentBadge = b.payment_status === 'paid' 
-                    ? '<span class="payment-badge paid">✓ PAID</span>'
-                    : '<span class="payment-badge unpaid">⚠ UNPAID</span>';
-
-                return `
-                    <div class="card bg-white border border-gray-200 p-4">
-                        <div class="flex justify-between items-start mb-3">
-                            <div class="flex-1 min-w-0">
-                                <h4 class="text-base md:text-lg font-black mb-1 truncate">${b.full_name}</h4>
-                                <p class="text-xs text-gray-400 font-semibold truncate">${b.phone_number}</p>
-                            </div>
-                            <span class="status-pill ${statusStyles[b.status]} ml-2">${b.status.replace('-', ' ').toUpperCase()}</span>
+            grid.innerHTML = filtered.map(b => `
+                <div class="card bg-white p-6 rounded-[2rem] border border-slate-200">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <h4 class="text-xl font-black text-slate-900 leading-tight">${b.full_name}</h4>
+                            <p class="text-xs font-bold text-slate-400 mt-1">${b.phone_number}</p>
                         </div>
-                        
-                        <div class="space-y-2 mb-3 text-sm">
-                            <div class="flex justify-between">
-                                <span class="text-gray-500">Room</span>
-                                <span class="font-bold">${b.room_type}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-500">Package</span>
-                                <span class="font-bold">${b.stay_type}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-500">Date</span>
-                                <span class="font-bold">${new Date(b.check_in_date).toLocaleDateString('en-US', {month: 'short', day: 'numeric'})}</span>
-                            </div>
-                            <div class="flex justify-between items-center border-t border-gray-100 pt-2">
-                                <span class="text-gray-500">Amount</span>
-                                <span class="font-black text-base md:text-lg">Rs ${b.total_amount}</span>
-                            </div>
+                        <span class="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest ${getStatusStyle(b.status)}">
+                            ${b.status}
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 mb-6">
+                        <div class="p-3 bg-slate-50 rounded-2xl">
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Room</p>
+                            <p class="text-sm font-bold text-slate-900">${b.room_type}</p>
                         </div>
-
-                        <div class="mb-3">${paymentBadge}</div>
-
-                        <div class="grid grid-cols-2 gap-2">
-                            <button onclick="editBooking('${b.id}')" class="py-2 bg-gray-100 hover:bg-gray-200 rounded-xl text-xs font-bold transition-all">Edit</button>
-                            ${b.status === 'pending' ? `<button onclick="quickCheckin('${b.id}')" class="py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition-all">Check In</button>` : ''}
-                            ${b.status === 'checked-in' ? `<button onclick="quickCheckout('${b.id}')" class="py-2 bg-[#c9a961] hover:bg-[#b39452] text-white rounded-xl text-xs font-bold transition-all">Checkout</button>` : ''}
-                            ${b.document_url ? `<button onclick="viewDocument('${b.document_url}')" class="py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-xl text-xs font-bold transition-all col-span-2">📄 View ID</button>` : ''}
+                        <div class="p-3 bg-slate-50 rounded-2xl">
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Arrival</p>
+                            <p class="text-sm font-bold text-slate-900">${b.check_in_time || '--:--'}</p>
                         </div>
                     </div>
-                `;
-            }).join('');
+
+                    <div class="flex items-center justify-between mb-6 px-1">
+                        <div class="flex items-center gap-2">
+                            <button onclick="togglePayment('${b.id}', '${b.payment_status}')" class="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${b.payment_status === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}">
+                                ${b.payment_status === 'paid' ? '✓ Paid' : '⚠ Unpaid'}
+                            </button>
+                            <span class="text-xs font-bold text-slate-400">Rs ${b.total_amount}</span>
+                        </div>
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${b.stay_type}</span>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button onclick="openBookingModal('${b.id}')" class="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-900 rounded-2xl text-xs font-bold transition-all">Edit Details</button>
+                        ${b.status === 'pending' ? `<button onclick="quickUpdateStatus('${b.id}', 'checked-in')" class="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl text-xs font-bold shadow-lg shadow-emerald-200 transition-all">Check In</button>` : ''}
+                        ${b.status === 'checked-in' ? `<button onclick="quickUpdateStatus('${b.id}', 'checked-out')" class="flex-1 py-3 bg-slate-900 hover:bg-black text-white rounded-2xl text-xs font-bold shadow-lg transition-all">Checkout</button>` : ''}
+                    </div>
+                </div>
+            `).join('');
         }
 
-        // Filter
-        window.filterBookings = (filter) => {
-            currentFilter = filter;
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('bg-white', 'shadow-sm');
-                btn.classList.add('text-gray-500');
-            });
-            document.getElementById(`filter-${filter}`).classList.add('bg-white', 'shadow-sm');
-            document.getElementById(`filter-${filter}`).classList.remove('text-gray-500');
+        function getStatusStyle(status) {
+            switch(status) {
+                case 'pending': return 'bg-amber-100 text-amber-700';
+                case 'checked-in': return 'bg-emerald-100 text-emerald-700';
+                case 'checked-out': return 'bg-slate-100 text-slate-500';
+                case 'cancelled': return 'bg-red-100 text-red-600';
+                default: return 'bg-slate-100 text-slate-500';
+            }
+        }
+
+        // Actions
+        window.setFilter = (f) => {
+            currentFilter = f;
+            document.querySelectorAll('[id^="f-"]').forEach(el => el.className = 'px-6 py-2 rounded-xl text-xs font-black transition-all text-slate-500 hover:bg-white');
+            document.getElementById(`f-${f}`).className = 'px-6 py-2 rounded-xl text-xs font-black transition-all bg-white shadow-sm';
             renderBookings();
         };
 
-        // Tab Switching
-        window.switchTab = (tab) => {
+        window.handleSearch = () => {
+            searchQuery = document.getElementById('booking-search').value;
+            renderBookings();
+        };
+
+        window.switchTab = (t) => {
             document.querySelectorAll('[id^="content-"]').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`content-${tab}`).classList.remove('hidden');
-            
-            document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.remove('tab-active'));
-            document.getElementById(`tab-${tab}`).classList.add('tab-active');
-            
-            if (tab === 'bookings') markAllAsSeen();
+            document.getElementById(`content-${t}`).classList.remove('hidden');
+            document.querySelectorAll('[id^="tab-"]').forEach(el => el.className = 'px-4 py-2 rounded-xl text-sm font-bold transition-all text-slate-500 hover:text-slate-900');
+            document.getElementById(`tab-${t}`).className = 'px-4 py-2 rounded-xl text-sm font-bold transition-all text-slate-900 bg-slate-100';
         };
 
-        // Modals
-        window.openBookingModal = () => {
-            document.getElementById('modal-title').textContent = 'New Booking';
-            document.getElementById('edit-booking-id').value = '';
-            document.getElementById('status-section').classList.add('hidden');
-            document.getElementById('document-section').classList.remove('hidden');
-            document.getElementById('delete-btn').classList.add('hidden');
-            document.getElementById('booking-form').reset();
+        window.openBookingModal = async (id = null) => {
+            const form = document.getElementById('booking-form');
+            form.reset();
+            document.getElementById('edit-id').value = id || '';
+            document.getElementById('modal-title').textContent = id ? 'Edit Reservation' : 'New Reservation';
+            document.getElementById('btn-delete').classList.toggle('hidden', !id);
             document.getElementById('b-date').value = selectedDate;
-            document.getElementById('booking-modal').classList.remove('hidden');
-            document.getElementById('booking-modal').classList.add('flex');
-        };
 
-        window.editBooking = async (id) => {
-            const booking = allBookings.find(b => b.id === id);
-            if (!booking) return;
+            if (id) {
+                const b = allBookings.find(x => x.id === id);
+                if (b) {
+                    document.getElementById('b-name').value = b.full_name;
+                    document.getElementById('b-phone').value = b.phone_number;
+                    document.getElementById('b-room').value = b.room_type;
+                    document.getElementById('b-type').value = b.stay_type;
+                    document.getElementById('b-date').value = b.check_in_date;
+                    document.getElementById('b-time').value = b.check_in_time || '';
+                    document.getElementById('b-status').value = b.status;
+                    document.getElementById('b-amount').value = b.total_amount;
+                    document.querySelector(`input[name="pay-status"][value="${b.payment_status}"]`).checked = true;
+                }
+            }
 
-            document.getElementById('modal-title').textContent = 'Edit Booking';
-            document.getElementById('edit-booking-id').value = booking.id;
-            document.getElementById('b-name').value = booking.full_name;
-            document.getElementById('b-phone').value = booking.phone_number;
-            document.getElementById('b-room').value = booking.room_type;
-            document.getElementById('b-type').value = booking.stay_type;
-            document.getElementById('b-date').value = booking.check_in_date;
-            document.getElementById('b-time').value = booking.check_in_time || '';
-            document.getElementById('b-status').value = booking.status;
-            document.getElementById('b-base-price').value = booking.base_price;
-            document.getElementById('b-discount').value = booking.discount_percentage || 0;
-            document.getElementById('b-amount').value = booking.total_amount;
-            document.getElementById('final-amount').textContent = `Rs ${booking.total_amount}`;
-            
-            const paymentRadios = document.querySelectorAll('input[name="payment-status"]');
-            paymentRadios.forEach(radio => radio.checked = radio.value === booking.payment_status);
-
-            document.getElementById('status-section').classList.remove('hidden');
-            document.getElementById('document-section').classList.add('hidden');
-            document.getElementById('delete-btn').classList.remove('hidden');
             document.getElementById('booking-modal').classList.remove('hidden');
             document.getElementById('booking-modal').classList.add('flex');
         };
 
         window.closeModals = () => {
-            document.querySelectorAll('[id$="-modal"]').forEach(modal => {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
+            document.querySelectorAll('[id$="-modal"]').forEach(m => {
+                m.classList.add('hidden');
+                m.classList.remove('flex');
             });
+            if (qrScanner) {
+                qrScanner.stop();
+                qrScanner = null;
+            }
         };
 
-        window.viewDocument = (url) => {
-            document.getElementById('document-image').src = url;
-            document.getElementById('document-viewer-modal').classList.remove('hidden');
-            document.getElementById('document-viewer-modal').classList.add('flex');
-        };
-
-        window.closeDocumentViewer = () => {
-            document.getElementById('document-viewer-modal').classList.add('hidden');
-            document.getElementById('document-viewer-modal').classList.remove('flex');
-        };
-
-        // Discount
-        window.applyDiscount = (percent) => {
-            const basePrice = parseFloat(document.getElementById('b-base-price').value) || 0;
-            const finalAmount = basePrice - (basePrice * percent / 100);
-            document.getElementById('b-discount').value = percent;
-            document.getElementById('b-amount').value = finalAmount;
-            document.getElementById('final-amount').textContent = `Rs ${finalAmount.toFixed(0)}`;
-        };
-
-        window.clearDiscount = () => {
-            const basePrice = parseFloat(document.getElementById('b-base-price').value) || 0;
-            document.getElementById('b-discount').value = 0;
-            document.getElementById('b-amount').value = basePrice;
-            document.getElementById('final-amount').textContent = `Rs ${basePrice.toFixed(0)}`;
-        };
-
-        document.getElementById('b-base-price').addEventListener('input', clearDiscount);
-
-        // Form Submit
         document.getElementById('booking-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            const basePrice = parseFloat(document.getElementById('b-base-price').value) || 0;
-            const discountPercent = parseFloat(document.getElementById('b-discount').value) || 0;
-            const finalAmount = parseFloat(document.getElementById('b-amount').value) || basePrice;
-            const paymentStatus = document.querySelector('input[name="payment-status"]:checked')?.value || 'unpaid';
-            const editId = document.getElementById('edit-booking-id').value;
-            
-            let documentUrl = null;
-            const fileInput = document.getElementById('b-document');
-            if (fileInput.files[0]) {
-                const file = fileInput.files[0];
-                const fileName = `${Date.now()}_${file.name}`;
-                const { data, error } = await supabase.storage.from('documents').upload(fileName, file);
-                if (!error) {
-                    const { data: urlData } = supabase.storage.from('documents').getPublicUrl(fileName);
-                    documentUrl = urlData.publicUrl;
-                }
-            }
-
-            const bookingData = {
+            const id = document.getElementById('edit-id').value;
+            const payload = {
                 full_name: document.getElementById('b-name').value,
                 phone_number: document.getElementById('b-phone').value,
                 room_type: document.getElementById('b-room').value,
                 stay_type: document.getElementById('b-type').value,
                 check_in_date: document.getElementById('b-date').value,
                 check_in_time: document.getElementById('b-time').value,
-                base_price: basePrice,
-                discount_percentage: discountPercent,
-                total_amount: finalAmount,
-                payment_status: paymentStatus
+                status: document.getElementById('b-status').value,
+                total_amount: parseFloat(document.getElementById('b-amount').value) || 0,
+                payment_status: document.querySelector('input[name="pay-status"]:checked').value
             };
 
-            if (editId) {
-                // Update
-                bookingData.status = document.getElementById('b-status').value;
-                const { error } = await supabase.from('bookings').update(bookingData).eq('id', editId);
-                if (error) alert('Error updating: ' + error.message);
-                else {
-                    showNotification('Updated', 'Booking updated successfully');
-                    closeModals();
-                    loadData();
-                }
+            const { error } = id ? 
+                await supabase.from('bookings').update(payload).eq('id', id) : 
+                await supabase.from('bookings').insert([payload]);
+
+            if (!error) {
+                closeModals();
+                loadData();
             } else {
-                // Create
-                bookingData.status = 'pending';
-                if (documentUrl) bookingData.document_url = documentUrl;
-                const { error } = await supabase.from('bookings').insert([bookingData]);
-                if (error) alert('Error creating: ' + error.message);
-                else {
-                    showNotification('Created', 'New booking added');
-                    closeModals();
-                    e.target.reset();
-                    loadData();
-                }
+                alert(error.message);
             }
         });
 
-        // Quick Actions
-        window.quickCheckin = async (id) => {
-            const { error } = await supabase.from('bookings').update({ status: 'checked-in' }).eq('id', id);
-            if (error) alert('Error: ' + error.message);
-            else {
-                showNotification('Checked In', 'Guest checked in successfully');
-                loadData();
-            }
+        window.quickUpdateStatus = async (id, status) => {
+            const { error } = await supabase.from('bookings').update({ status }).eq('id', id);
+            if (!error) loadData();
         };
 
-        window.quickCheckout = async (id) => {
-            const { error } = await supabase.from('bookings').update({ status: 'checked-out', payment_status: 'paid' }).eq('id', id);
-            if (error) alert('Error: ' + error.message);
-            else {
-                showNotification('Checked Out', 'Guest checked out successfully');
-                loadData();
-            }
+        window.togglePayment = async (id, current) => {
+            const next = current === 'paid' ? 'unpaid' : 'paid';
+            await supabase.from('bookings').update({ payment_status: next }).eq('id', id);
+            loadData();
         };
 
         window.deleteBooking = async () => {
-            if (!confirm('Delete this booking?')) return;
-            const id = document.getElementById('edit-booking-id').value;
-            const { error } = await supabase.from('bookings').delete().eq('id', id);
-            if (error) alert('Error: ' + error.message);
-            else {
+            const id = document.getElementById('edit-id').value;
+            if (confirm('Permanently delete this record?')) {
+                await supabase.from('bookings').delete().eq('id', id);
                 closeModals();
                 loadData();
             }
         };
 
-        // QR Scanner
+        // QR Integration
         window.openQRScanner = () => {
-            document.getElementById('qr-scanner-modal').classList.remove('hidden');
-            document.getElementById('qr-scanner-modal').classList.add('flex');
-            
+            document.getElementById('qr-modal').classList.remove('hidden');
+            document.getElementById('qr-modal').classList.add('flex');
             qrScanner = new Html5Qrcode("qr-reader");
             qrScanner.start(
                 { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 250, height: 250 } },
-                async (decodedText) => {
-                    qrScanner.stop();
-                    const booking = allBookings.find(b => b.id === decodedText);
-                    if (booking) {
-                        closeQRScanner();
-                        editBooking(decodedText);
-                    } else {
-                        alert('Booking not found');
-                        closeQRScanner();
-                    }
+                { fps: 10, qrbox: 250 },
+                (decodedText) => {
+                    closeModals();
+                    openBookingModal(decodedText);
                 }
-            ).catch(err => console.error('QR error:', err));
+            ).catch(err => alert("Camera permission denied or camera not found."));
         };
 
-        window.closeQRScanner = () => {
-            if (qrScanner) {
-                qrScanner.stop().then(() => {
-                    qrScanner = null;
-                    document.getElementById('qr-scanner-modal').classList.add('hidden');
-                    document.getElementById('qr-scanner-modal').classList.remove('flex');
-                }).catch(() => {
-                    qrScanner = null;
-                    document.getElementById('qr-scanner-modal').classList.add('hidden');
-                    document.getElementById('qr-scanner-modal').classList.remove('flex');
-                });
-            } else {
-                document.getElementById('qr-scanner-modal').classList.add('hidden');
-                document.getElementById('qr-scanner-modal').classList.remove('flex');
-            }
-        };
+        // Insights Logic
+        function renderInsights() {
+            const rev = allBookings.reduce((sum, b) => sum + (b.total_amount || 0), 0);
+            document.getElementById('ins-revenue').textContent = `Rs ${rev.toLocaleString()}`;
+            document.getElementById('ins-count').textContent = allBookings.length;
+            
+            const counts = {};
+            allBookings.forEach(b => counts[b.room_type] = (counts[b.room_type] || 0) + 1);
+            const top = Object.entries(counts).sort((a,b) => b[1]-a[1])[0];
+            document.getElementById('ins-top-room').textContent = top ? top[0] : '—';
 
-        // Initialize
+            const pkgs = { Daycation: 0, Staycation: 0, 'Full Stay': 0 };
+            allBookings.forEach(b => pkgs[b.stay_type] += (b.total_amount || 0));
+
+            document.getElementById('ins-package-breakdown').innerHTML = Object.entries(pkgs).map(([k, v]) => `
+                <div class="space-y-2">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${k}</p>
+                    <p class="text-2xl font-black">Rs ${v.toLocaleString()}</p>
+                    <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                        <div class="h-full bg-slate-900" style="width: ${Math.min(100, (v/rev)*100)}%"></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
         checkSession();
     </script>
 </body>
