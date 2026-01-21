@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -561,7 +560,6 @@
     type="file" 
     id="b-document" 
     accept="image/jpeg,image/jpg,image/png,image/heic,image/heif,application/pdf"
-    capture="environment"
     required>
   <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Required: Upload citizenship or ID document</p>
 </div>
@@ -1016,107 +1014,81 @@ document.getElementById('btn-confirm-booking').onclick = async () => {
     return;
   }
 
-// Validate document upload (REQUIRED)
-
-if(!docInput.files || docInput.files.length === 0) {
-  alert("Please upload your citizenship or ID document to continue.");
-  docInput.focus();
-  return;
-}
-
-// Validate file size (max 5MB)
-const maxSize = 5 * 1024 * 1024;
-const file = docInput.files[0];
-
-if(file.size > maxSize) {
-  alert("Document file size must be less than 5MB.");
-  return;
-}
-
-// Validate file type - EXPANDED for iOS
-const allowedTypes = [
-  'image/jpeg', 
-  'image/jpg', 
-  'image/png', 
-  'image/webp',
-  'image/heic',  // iOS photos
-  'image/heif',  // iOS photos
-  'application/pdf'
-];
-
-// iOS sometimes reports empty type for HEIC files
-if(file.type && !allowedTypes.includes(file.type)) {
-  alert("Please upload a valid document (JPG, PNG, HEIC, or PDF only).");
-  return;
-}
-
-// Additional check: if type is empty, check file extension
-if(!file.type || file.type === '') {
-  const fileName = file.name.toLowerCase();
-  const validExtensions = ['.jpg', '.jpeg', '.png', '.heic', '.heif', '.pdf'];
-  const hasValidExtension = validExtensions.some(ext => fileName.endsWith(ext));
-  
-  if(!hasValidExtension) {
-    alert("Please upload a valid document (JPG, PNG, HEIC, or PDF only).");
+  // Validate document upload (REQUIRED)
+  if(!docInput.files || docInput.files.length === 0) {
+    alert("Please upload your citizenship or ID document to continue.");
+    docInput.focus();
     return;
   }
-}
+
+  const file = docInput.files[0];
+  const maxSize = 5 * 1024 * 1024; // 5MB limit
+  if(file.size > maxSize) {
+    alert("Document file size must be less than 5MB.");
+    return;
+  }
+
+  // iOS-specific file type handling
+  const fileNameParts = file.name.split('.');
+  const fileExt = fileNameParts.length > 1 ? fileNameParts.pop().toLowerCase() : '';
+  
+  // Explicitly mapping common iOS types
+  const mimeTypeMapping = {
+    'heic': 'image/heic',
+    'heif': 'image/heif',
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'png': 'image/png',
+    'webp': 'image/webp',
+    'pdf': 'application/pdf'
+  };
+
+  const detectedType = file.type || mimeTypeMapping[fileExt] || 'application/octet-stream';
 
   const btn = document.getElementById('btn-confirm-booking');
   btn.disabled = true;
   btn.innerHTML = '<div class="loader"></div> Finalizing...';
 
-  // Handle document upload using Supabase Storage
   let documentUrl = null;
-
-  if(docInput.files && docInput.files[0]) {
-    const file = docInput.files[0];
-    const fileName = `${Date.now()}_${file.name}`;
-    
-    try {
-      const { data, error } = await supabase.storage
-        .from('documents')
-        .upload(fileName, file);
-      
-      if (!error) {
-        const { data: urlData } = supabase.storage
-          .from('documents')
-          .getPublicUrl(fileName);
-        documentUrl = urlData.publicUrl;
-      } else {
-        console.error('Upload error:', error);
-        alert("Error uploading document. Please try again.");
-        btn.disabled = false;
-        btn.innerHTML = 'Confirm & Book Now';
-        return;
-      }
-    } catch (uploadErr) {
-      console.error('Upload exception:', uploadErr);
-      alert("Error uploading document. Please try again.");
-      btn.disabled = false;
-      btn.innerHTML = 'Confirm & Book Now';
-      return;
-    }
-  }
-
-  const refToken = 'LMT-' + Math.random().toString(36).substr(2, 6).toUpperCase();
-  const payload = {
-    full_name: name,
-    phone_number: phone,
-    check_in_date: state.date,
-    arrival_time: state.time,
-    stay_type: state.stayType,
-    room_type: state.selectedRoom.name,
-    total_amount: state.selectedRoom.currentPrice * 2,
-    base_amount: state.selectedRoom.currentPrice * 2,
-    discount_percent: 0,
-    status: 'pending',
-    payment_status: 'unpaid',
-    qr_token: refToken,
-    document_url: documentUrl
-  };
+  const storagePath = `docs_${Date.now()}_${Math.random().toString(36).substr(2, 6)}.${fileExt || 'bin'}`;
 
   try {
+    // Using Supabase storage client for better error feedback on iOS
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('documents')
+      .upload(storagePath, file, {
+        contentType: detectedType,
+        cacheControl: '3600',
+        upsert: false
+      });
+    
+    if (uploadError) {
+      console.error('Storage error:', uploadError);
+      throw new Error(uploadError.message);
+    }
+
+    const { data: urlData } = supabase.storage
+      .from('documents')
+      .getPublicUrl(storagePath);
+    documentUrl = urlData.publicUrl;
+
+    const refToken = 'LMT-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+    const payload = {
+      full_name: name,
+      phone_number: phone,
+      check_in_date: state.date,
+      arrival_time: state.time,
+      stay_type: state.stayType,
+      room_type: state.selectedRoom.name,
+      total_amount: state.selectedRoom.currentPrice * 2,
+      base_amount: state.selectedRoom.currentPrice * 2,
+      discount_percent: 0,
+      status: 'pending',
+      payment_status: 'unpaid',
+      qr_token: refToken,
+      document_url: documentUrl
+    };
+
     const resp = await fetch(CONFIG.URL, {
       method: 'POST',
       headers: { 
@@ -1127,6 +1099,9 @@ if(!file.type || file.type === '') {
       },
       body: JSON.stringify(payload)
     });
+    
+    if (!resp.ok) throw new Error("Database insertion failed");
+    
     const data = await resp.json();
     const confirmed = data[0];
 
@@ -1159,7 +1134,7 @@ if(!file.type || file.type === '') {
 
     changeStep(4);
   } catch (e) {
-    alert("Booking failed. Please try again.");
+    alert("Booking or Document Upload failed: " + e.message);
     console.error(e);
     btn.disabled = false;
     btn.innerHTML = 'Confirm & Book Now';
