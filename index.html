@@ -11,6 +11,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/heic2any/dist/heic2any.min.js"></script>
+
   <style>
     :root {
       --primary: #c9a961;
@@ -555,14 +557,23 @@
         <input type="tel" id="input-phone" placeholder="98XXXXXXXX">
       </div>
 <div class="form-group">
-  <label>Upload Document (Citizenship/ID) <span style="color: #e74c3c;">*</span></label>
-  <input 
-    type="file" 
-    id="b-document" 
-    accept="image/jpeg,image/jpg,image/png,image/heic,image/heif,application/pdf"
-    required>
-  <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Required: Upload citizenship or ID document</p>
+  <label>
+    Upload Document (Citizenship / ID)
+    <span style="color:#e74c3c">*</span>
+  </label>
+
+  <input
+    type="file"
+    id="b-document"
+    accept="image/*,.heic,.heif,application/pdf"
+    capture="environment"
+  />
+
+  <p style="font-size:11px;color:var(--text-muted);margin-top:8px;">
+    Take a clear photo or upload a document (JPG, PNG, PDF)
+  </p>
 </div>
+
       <div class="summary-card">
         <label>Booking Summary</label>
         <div class="summary-row"><span>Stay:</span> <span id="summ-stay">-</span></div>
@@ -648,8 +659,7 @@
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   const CONFIG = {
-    URL: 'https://fzwnglhxtmtltpysdzma.supabase.co/rest/v1/bookings',
-    KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6d25nbGh4dG10bHRweXNkem1hIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2ODU4MTQzMCwiZXhwIjoyMDg0MTU3NDMwfQ.Ok0ZxnIHJnsvM2D67BiNoe84VnCqaV_Tz61Zl73nuRw'
+    TABLE_NAME: 'bookings'
   };
 
   const ROOMS = [
@@ -764,6 +774,29 @@
     }
   }
   
+async function normalizeFile(file) {
+  if (!file) return null;
+
+  const isHeic =
+    file.type === "image/heic" ||
+    file.type === "image/heif" ||
+    file.name.toLowerCase().endsWith(".heic") ||
+    file.name.toLowerCase().endsWith(".heif");
+
+  if (!isHeic) return file;
+
+  const jpegBlob = await heic2any({
+    blob: file,
+    toType: "image/jpeg",
+    quality: 0.8
+  });
+
+  return new File(
+    [jpegBlob],
+    `document_${Date.now()}.jpg`,
+    { type: "image/jpeg" }
+  );
+}
 
   // QR Scanner
   const startScanner = async () => {
@@ -804,10 +837,12 @@
   // Lookup booking
   const lookupBooking = async (token) => {
     try {
-      const resp = await fetch(`${CONFIG.URL}?qr_token=eq.${token}`, {
-        headers: { apikey: CONFIG.KEY, Authorization: `Bearer ${CONFIG.KEY}` }
-      });
-      const data = await resp.json();
+      const { data, error } = await supabase
+        .from(CONFIG.TABLE_NAME)
+        .select('*')
+        .eq('qr_token', token);
+      
+      if(error) throw error;
       
       if(data && data.length > 0) {
         scannedBooking = data[0];
@@ -864,23 +899,20 @@
     btn.innerText = 'Updating...';
 
     try {
-      const resp = await fetch(`${CONFIG.URL}?id=eq.${scannedBooking.id}`, {
-        method: 'PATCH',
-        headers: { 
-          'apikey': CONFIG.KEY, 
-          'Authorization': `Bearer ${CONFIG.KEY}`, 
-          'Content-Type': 'application/json', 
-          'Prefer': 'return=representation' 
-        },
-        body: JSON.stringify({ status: 'checked-in' })
-      });
-      const data = await resp.json();
+      const { data, error } = await supabase
+        .from(CONFIG.TABLE_NAME)
+        .update({ status: 'checked-in' })
+        .eq('id', scannedBooking.id)
+        .select();
+        
+      if(error) throw error;
+
       scannedBooking = data[0];
       showGuestPreview(data[0]);
       alert("Check-in successful!");
       scanInput.value = '';
     } catch(e) {
-      alert("Error updating check-in status.");
+      alert("Error updating check-in status: " + e.message);
       btn.disabled = false;
       btn.innerText = 'Confirm Check-In';
     }
@@ -925,10 +957,13 @@
     ldr.style.display = 'block';
 
     try {
-      const resp = await fetch(`${CONFIG.URL}?check_in_date=eq.${state.date}&stay_type=eq.${state.stayType}&select=room_type`, {
-        headers: { apikey: CONFIG.KEY, Authorization: `Bearer ${CONFIG.KEY}` }
-      });
-      const data = await resp.json();
+      const { data, error } = await supabase
+        .from(CONFIG.TABLE_NAME)
+        .select('room_type')
+        .eq('check_in_date', state.date)
+        .eq('stay_type', state.stayType);
+      
+      if(error) throw error;
       
       state.availabilities = {};
       ROOMS.forEach(r => {
@@ -939,7 +974,7 @@
       renderRoomList();
       changeStep(2);
     } catch (e) {
-      alert("Error checking availability. Check connection.");
+      alert("Error checking availability: " + e.message);
       console.error(e);
     } finally {
       btn.disabled = false;
@@ -1008,31 +1043,29 @@ document.getElementById('btn-confirm-booking').onclick = async () => {
   const phone = document.getElementById('input-phone').value.trim();
   const docInput = document.getElementById('b-document');
 
-  // Validate name and phone
   if(!name || phone.length < 10) {
     alert("Please enter valid full name and phone number.");
     return;
   }
 
-  // Validate document upload (REQUIRED)
   if(!docInput.files || docInput.files.length === 0) {
     alert("Please upload your citizenship or ID document to continue.");
     docInput.focus();
     return;
   }
 
-  const file = docInput.files[0];
-  const maxSize = 5 * 1024 * 1024; // 5MB limit
+ let file = docInput.files[0];
+file = await normalizeFile(file);
+
+  const maxSize = 5 * 1024 * 1024;
   if(file.size > maxSize) {
     alert("Document file size must be less than 5MB.");
     return;
   }
 
-  // iOS-specific file type handling
   const fileNameParts = file.name.split('.');
   const fileExt = fileNameParts.length > 1 ? fileNameParts.pop().toLowerCase() : '';
   
-  // Explicitly mapping common iOS types
   const mimeTypeMapping = {
     'heic': 'image/heic',
     'heif': 'image/heif',
@@ -1050,10 +1083,10 @@ document.getElementById('btn-confirm-booking').onclick = async () => {
   btn.innerHTML = '<div class="loader"></div> Finalizing...';
 
   let documentUrl = null;
+  if (docInput.files.length > 0){}
   const storagePath = `docs_${Date.now()}_${Math.random().toString(36).substr(2, 6)}.${fileExt || 'bin'}`;
 
   try {
-    // Using Supabase storage client for better error feedback on iOS
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('documents')
       .upload(storagePath, file, {
@@ -1062,10 +1095,7 @@ document.getElementById('btn-confirm-booking').onclick = async () => {
         upsert: false
       });
     
-    if (uploadError) {
-      console.error('Storage error:', uploadError);
-      throw new Error(uploadError.message);
-    }
+    if (uploadError) throw new Error("Upload Error: " + uploadError.message);
 
     const { data: urlData } = supabase.storage
       .from('documents')
@@ -1073,6 +1103,8 @@ document.getElementById('btn-confirm-booking').onclick = async () => {
     documentUrl = urlData.publicUrl;
 
     const refToken = 'LMT-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+    const totalVal = Number(state.selectedRoom.currentPrice * 2);
+    
     const payload = {
       full_name: name,
       phone_number: phone,
@@ -1080,8 +1112,8 @@ document.getElementById('btn-confirm-booking').onclick = async () => {
       arrival_time: state.time,
       stay_type: state.stayType,
       room_type: state.selectedRoom.name,
-      total_amount: state.selectedRoom.currentPrice * 2,
-      base_amount: state.selectedRoom.currentPrice * 2,
+      total_amount: totalVal,
+      base_amount: totalVal,
       discount_percent: 0,
       status: 'pending',
       payment_status: 'unpaid',
@@ -1089,21 +1121,21 @@ document.getElementById('btn-confirm-booking').onclick = async () => {
       document_url: documentUrl
     };
 
-    const resp = await fetch(CONFIG.URL, {
-      method: 'POST',
-      headers: { 
-        'apikey': CONFIG.KEY, 
-        'Authorization': `Bearer ${CONFIG.KEY}`, 
-        'Content-Type': 'application/json', 
-        'Prefer': 'return=representation' 
-      },
-      body: JSON.stringify(payload)
-    });
+    const { data: insertData, error: insertError } = await supabase
+      .from(CONFIG.TABLE_NAME)
+      .insert([payload])
+      .select();
     
-    if (!resp.ok) throw new Error("Database insertion failed");
+    if (insertError) {
+        console.error("Supabase Insert Error:", insertError);
+        // Special check for RLS failure feedback
+        if (insertError.code === '42501' || insertError.message.includes('security policy')) {
+            throw new Error("Security policy blocked the booking. Please ensure the 'anon' role has 'INSERT' permissions on the database.");
+        }
+        throw new Error("Database Error: " + insertError.message);
+    }
     
-    const data = await resp.json();
-    const confirmed = data[0];
+    const confirmed = insertData[0]; 
 
     // Build Ticket
     document.getElementById('ticket-ref-id').innerText = confirmed.qr_token;
@@ -1118,7 +1150,6 @@ document.getElementById('btn-confirm-booking').onclick = async () => {
       </div>
     `;
 
-    // Generate QR Code
     const qrTarget = document.getElementById('qrcode-display');
     qrTarget.innerHTML = '';
     setTimeout(() => {
@@ -1134,7 +1165,7 @@ document.getElementById('btn-confirm-booking').onclick = async () => {
 
     changeStep(4);
   } catch (e) {
-    alert("Booking or Document Upload failed: " + e.message);
+    alert("Action failed: " + e.message);
     console.error(e);
     btn.disabled = false;
     btn.innerHTML = 'Confirm & Book Now';
