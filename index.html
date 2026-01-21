@@ -699,27 +699,39 @@
 
   arrivalGroup.style.display = 'none';
 
-  stayItems.forEach(item => {
-    item.addEventListener('click', () => {
-      stayItems.forEach(i => i.classList.remove('active'));
-      item.classList.add('active');
+ stayItems.forEach(item => {
+  item.addEventListener('click', () => {
+    stayItems.forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
 
-      const stay = item.dataset.stay;
-      const start = item.dataset.start;
-      const end = item.dataset.end;
+    const stay = item.dataset.stay;
+    const start = item.dataset.start;
+    const end = item.dataset.end;
 
-      state.stayType = stay;
-      arrivalGroup.style.display = 'block';
-      arrivalLabel.textContent = `${stay} starts from ${start}`;
+    const overnight = end < start;
 
+    state.stayType = stay;
+
+    arrivalGroup.style.display = 'block';
+    arrivalLabel.textContent = overnight
+      ? `${stay} starts from ${start} (next day checkout)`
+      : `${stay} starts from ${start}`;
+
+    if (!overnight) {
       timeInput.min = start;
       timeInput.max = end;
-      timeInput.value = start;
-      state.time = start;
+    } else {
+      timeInput.removeAttribute('min');
+      timeInput.removeAttribute('max');
+    }
 
-      errorToast.style.display = 'none';
-    });
+    timeInput.value = start;
+    state.time = start;
+
+    errorToast.style.display = 'none';
   });
+});
+
 
   timeInput.addEventListener('change', () => {
     if (timeInput.value < timeInput.min || timeInput.value > timeInput.max) {
