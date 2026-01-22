@@ -564,11 +564,6 @@
         <label>Phone Number</label>
         <input type="tel" id="input-phone" placeholder="98XXXXXXXX">
       </div>
-<div class="form-group">
-  <label>
-    Upload Document (Citizenship / ID)--optional
-   
-  </label>
 
  <!-- <input
     type="file"
@@ -1068,74 +1063,23 @@ function renderRoomList() {
 document.getElementById('btn-confirm-booking').onclick = async () => {
   const name = document.getElementById('input-name').value.trim();
   const phone = document.getElementById('input-phone').value.trim();
-  const docInput = document.getElementById('b-document');
+  // DELETE THIS LINE:
+  // const docInput = document.getElementById('b-document');
 
   if(!name || phone.length < 10) {
     alert("Please enter valid full name and phone number.");
     return;
   }
 
-  // REMOVED the required document check - now optional
-
   const btn = document.getElementById('btn-confirm-booking');
   btn.disabled = true;
   btn.innerHTML = '<div class="loader"></div> Finalizing...';
 
+  // DELETE ALL THE UPLOAD CODE (the entire commented section you showed)
+  // Just set documentUrl to null:
   let documentUrl = null;
-  
-  // Only upload if document is provided
-  /* if(docInput.files && docInput.files.length > 0) {
-    let file = docInput.files[0];
-    file = await normalizeFile(file);
 
-    const maxSize = 5 * 1024 * 1024;
-    if(file.size > maxSize) {
-      alert("Document file size must be less than 5MB.");
-      btn.disabled = false;
-      btn.innerHTML = 'Confirm & Book Now';
-      return;
-    }
-
-    const fileNameParts = file.name.split('.');
-    const fileExt = fileNameParts.length > 1 ? fileNameParts.pop().toLowerCase() : '';
-    
-    const mimeTypeMapping = {
-      'heic': 'image/heic',
-      'heif': 'image/heif',
-      'jpg': 'image/jpeg',
-      'jpeg': 'image/jpeg',
-      'png': 'image/png',
-      'webp': 'image/webp',
-      'pdf': 'application/pdf'
-    };
-
-    const detectedType = file.type || mimeTypeMapping[fileExt] || 'application/octet-stream';
-    const storagePath = `docs_${Date.now()}_${Math.random().toString(36).substr(2, 6)}.${fileExt || 'bin'}`;
-
-    try {
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('documents')
-        .upload(storagePath, file, {
-          contentType: detectedType,
-          cacheControl: '3600',
-          upsert: false
-        });
-      
-      if (uploadError) throw new Error("Upload Error: " + uploadError.message);
-
-      const { data: urlData } = supabase.storage
-        .from('documents')
-        .getPublicUrl(storagePath);
-      documentUrl = urlData.publicUrl;
-    } catch(uploadErr) {
-      alert("Document upload failed: " + uploadErr.message);
-      btn.disabled = false;
-      btn.innerHTML = 'Confirm & Book Now';
-      return;
-    }
-  } */
-
-  // Continue with booking creation
+  // Continue with booking creation (KEEP THIS PART)
   try {
     const refToken = 'LMT-' + Math.random().toString(36).substr(2, 6).toUpperCase();
     const totalVal = Number(state.selectedRoom.currentPrice * 2);
@@ -1153,7 +1097,7 @@ document.getElementById('btn-confirm-booking').onclick = async () => {
       status: 'pending',
       payment_status: 'unpaid',
       qr_token: refToken,
-      document_url: documentUrl  // Will be null if no document uploaded
+      document_url: documentUrl  // Will be null
     };
 
     const { data: insertData, error: insertError } = await supabase
@@ -1171,7 +1115,7 @@ document.getElementById('btn-confirm-booking').onclick = async () => {
     
     const confirmed = insertData[0]; 
 
-    // Build Ticket
+    // KEEP ALL THE QR CODE AND TICKET GENERATION CODE BELOW
     document.getElementById('ticket-ref-id').innerText = confirmed.qr_token;
     document.getElementById('ticket-data-grid').innerHTML = `
       <div class="ticket-item"><span class="ticket-label">Guest</span><span class="ticket-val">${confirmed.full_name}</span></div>
