@@ -566,8 +566,8 @@
       </div>
 <div class="form-group">
   <label>
-    Upload Document (Citizenship / ID)
-    <span style="color:#e74c3c">*</span>
+    Upload Document (Citizenship / ID)--optional
+   
   </label>
 
   <input
@@ -1075,60 +1075,68 @@ document.getElementById('btn-confirm-booking').onclick = async () => {
     return;
   }
 
-  if(!docInput.files || docInput.files.length === 0) {
-    alert("Please upload your citizenship or ID document to continue.");
-    docInput.focus();
-    return;
-  }
-
- let file = docInput.files[0];
-file = await normalizeFile(file);
-
-  const maxSize = 5 * 1024 * 1024;
-  if(file.size > maxSize) {
-    alert("Document file size must be less than 5MB.");
-    return;
-  }
-
-  const fileNameParts = file.name.split('.');
-  const fileExt = fileNameParts.length > 1 ? fileNameParts.pop().toLowerCase() : '';
-  
-  const mimeTypeMapping = {
-    'heic': 'image/heic',
-    'heif': 'image/heif',
-    'jpg': 'image/jpeg',
-    'jpeg': 'image/jpeg',
-    'png': 'image/png',
-    'webp': 'image/webp',
-    'pdf': 'application/pdf'
-  };
-
-  const detectedType = file.type || mimeTypeMapping[fileExt] || 'application/octet-stream';
+  // REMOVED the required document check - now optional
 
   const btn = document.getElementById('btn-confirm-booking');
   btn.disabled = true;
   btn.innerHTML = '<div class="loader"></div> Finalizing...';
 
   let documentUrl = null;
-  if (docInput.files.length > 0){}
-  const storagePath = `docs_${Date.now()}_${Math.random().toString(36).substr(2, 6)}.${fileExt || 'bin'}`;
+  
+  // Only upload if document is provided
+  if(docInput.files && docInput.files.length > 0) {
+    let file = docInput.files[0];
+    file = await normalizeFile(file);
 
-  try {
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('documents')
-      .upload(storagePath, file, {
-        contentType: detectedType,
-        cacheControl: '3600',
-        upsert: false
-      });
+    const maxSize = 5 * 1024 * 1024;
+    if(file.size > maxSize) {
+      alert("Document file size must be less than 5MB.");
+      btn.disabled = false;
+      btn.innerHTML = 'Confirm & Book Now';
+      return;
+    }
+
+    const fileNameParts = file.name.split('.');
+    const fileExt = fileNameParts.length > 1 ? fileNameParts.pop().toLowerCase() : '';
     
-    if (uploadError) throw new Error("Upload Error: " + uploadError.message);
+    const mimeTypeMapping = {
+      'heic': 'image/heic',
+      'heif': 'image/heif',
+      'jpg': 'image/jpeg',
+      'jpeg': 'image/jpeg',
+      'png': 'image/png',
+      'webp': 'image/webp',
+      'pdf': 'application/pdf'
+    };
 
-    const { data: urlData } = supabase.storage
-      .from('documents')
-      .getPublicUrl(storagePath);
-    documentUrl = urlData.publicUrl;
+    const detectedType = file.type || mimeTypeMapping[fileExt] || 'application/octet-stream';
+    const storagePath = `docs_${Date.now()}_${Math.random().toString(36).substr(2, 6)}.${fileExt || 'bin'}`;
 
+    try {
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(storagePath, file, {
+          contentType: detectedType,
+          cacheControl: '3600',
+          upsert: false
+        });
+      
+      if (uploadError) throw new Error("Upload Error: " + uploadError.message);
+
+      const { data: urlData } = supabase.storage
+        .from('documents')
+        .getPublicUrl(storagePath);
+      documentUrl = urlData.publicUrl;
+    } catch(uploadErr) {
+      alert("Document upload failed: " + uploadErr.message);
+      btn.disabled = false;
+      btn.innerHTML = 'Confirm & Book Now';
+      return;
+    }
+  }
+
+  // Continue with booking creation
+  try {
     const refToken = 'LMT-' + Math.random().toString(36).substr(2, 6).toUpperCase();
     const totalVal = Number(state.selectedRoom.currentPrice * 2);
     
@@ -1145,7 +1153,7 @@ file = await normalizeFile(file);
       status: 'pending',
       payment_status: 'unpaid',
       qr_token: refToken,
-      document_url: documentUrl
+      document_url: documentUrl  // Will be null if no document uploaded
     };
 
     const { data: insertData, error: insertError } = await supabase
@@ -1155,7 +1163,6 @@ file = await normalizeFile(file);
     
     if (insertError) {
         console.error("Supabase Insert Error:", insertError);
-        // Special check for RLS failure feedback
         if (insertError.code === '42501' || insertError.message.includes('security policy')) {
             throw new Error("Security policy blocked the booking. Please ensure the 'anon' role has 'INSERT' permissions on the database.");
         }
