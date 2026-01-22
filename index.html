@@ -570,7 +570,7 @@
    
   </label>
 
-  <input
+ <!-- <input
     type="file"
     id="b-document"
     accept="image/*,.heic,.heif,application/pdf"
@@ -580,7 +580,7 @@
   <p style="font-size:11px;color:var(--text-muted);margin-top:8px;">
     Take a clear photo or upload a document (JPG, PNG, PDF)
   </p>
-</div>
+</div> -->
 
       <div class="summary-card">
         <label>Booking Summary</label>
@@ -1084,7 +1084,7 @@ document.getElementById('btn-confirm-booking').onclick = async () => {
   let documentUrl = null;
   
   // Only upload if document is provided
-  if(docInput.files && docInput.files.length > 0) {
+  /* if(docInput.files && docInput.files.length > 0) {
     let file = docInput.files[0];
     file = await normalizeFile(file);
 
@@ -1133,7 +1133,7 @@ document.getElementById('btn-confirm-booking').onclick = async () => {
       btn.innerHTML = 'Confirm & Book Now';
       return;
     }
-  }
+  } */
 
   // Continue with booking creation
   try {
