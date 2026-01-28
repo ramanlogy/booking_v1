@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumanti Staff Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #fafafa; color: #1a1a1a; overflow-x: hidden; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+        /* Header */
+        .header {
+            background: white; border-bottom: 1px solid #e0e0e0; padding: 16px 20px;
+            position: sticky; top: 0; z-index: 100; display: flex;
+            justify-content: space-between; align-items: center; margin-bottom: 32px;
+        }
+        .logo { font-size: 24px; font-weight: 700; color: #1a1a1a; letter-spacing: 2px; }
+        .header-actions { display: flex; gap: 12px; }
+
+        /* Login Screen */
+        .login-screen {
+            position: fixed; inset: 0; background: white; display: flex;
+            align-items: center; justify-content: center; z-index: 1000; transition: opacity 0.3s ease;
+        }
+        .login-screen.hidden { opacity: 0; pointer-events: none; }
+        .login-box { width: 100%; max-width: 400px; padding: 40px; text-align: center; }
+        .login-title { font-size: 32px; font-weight: 700; margin-bottom: 8px; letter-spacing: 2px; }
+        .login-subtitle { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 40px; }
+        .form-group { margin-bottom: 16px; position: relative; }
+        input, select {
+            width: 100%; padding: 16px; border: 2px solid #e0e0e0; border-radius: 8px;
+            font-size: 16px; font-family: inherit; transition: all 0.2s; background: white;
+        }
+        input:focus, select:focus { outline: none; border-color: #1a1a1a; }
+        .btn {
+            width: 100%; padding: 16px; background: #1a1a1a; color: white; border: none;
+            border-radius: 50px; font-size: 16px; font-weight: 600; cursor: pointer;
+            transition: all 0.2s; font-family: inherit; display: inline-flex; align-items: center; justify-content: center;
+        }
+        .btn:hover { background: #000; transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-small { width: auto; padding: 10px 20px; font-size: 14px; }
+        .btn-secondary { background: #f5f5f5; color: #1a1a1a; }
+        .error-msg { color: #d32f2f; font-size: 13px; margin-top: 12px; display: none; }
+
+        /* Stats */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+        .stat-card { background: white; border: 2px solid #e0e0e0; border-radius: 12px; padding: 20px; }
+        .stat-label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .stat-value { font-size: 24px; font-weight: 700; color: #1a1a1a; }
+
+        /* Date Picker */
+        .date-section { margin-bottom: 32px; }
+        .section-title { font-size: 14px; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+        .date-scroll { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 12px; }
+        .date-scroll::-webkit-scrollbar { height: 4px; }
+        .date-scroll::-webkit-scrollbar-track { background: #f5f5f5; }
+        .date-scroll::-webkit-scrollbar-thumb { background: #ccc; border-radius: 2px; }
+        .date-btn {
+            flex-shrink: 0; min-width: 80px; background: white; border: 2px solid #e0e0e0;
+            border-radius: 12px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.2s;
+        }
+        .date-btn.active { background: #1a1a1a; border-color: #1a1a1a; color: white; }
+        .date-day { font-size: 10px; text-transform: uppercase; opacity: 0.6; margin-bottom: 4px; letter-spacing: 1px; }
+        .date-number { font-size: 18px; font-weight: 700; }
+
+        /* Filter Tabs */
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .filter-tabs { display: flex; gap: 8px; background: white; border: 2px solid #e0e0e0; border-radius: 12px; padding: 4px; }
+        .filter-tab { padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; }
+        .filter-tab.active { background: #1a1a1a; color: white; }
+
+        /* Room Grid */
+        .rooms-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; margin-bottom: 32px; }
+        .room-card { background: white; border: 2px solid #e0e0e0; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; }
+        .room-card.available { border-color: #0a8040; background: #f0fdf4; }
+        .room-card.busy { border-color: #d32f2f; background: #fef2f2; opacity: 0.7; }
+        .room-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+        .room-status { font-size: 12px; font-weight: 600; opacity: 0.8; }
+
+        /* Booking List */
+        .bookings-list { display: grid; gap: 12px; }
+        .booking-card { background: white; border: 2px solid #e0e0e0; border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: center; }
+        .booking-info { flex: 1; }
+        .booking-name { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+        .booking-details { font-size: 12px; color: #666; }
+        .status-badge { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; text-transform: uppercase; margin-left: 8px; }
+        .status-pending { background: #fff7ed; color: #92400e; }
+        .status-checked-in { background: #ecfdf5; color: #065f46; }
+        .status-checked-out { background: #f5f5f5; color: #666; }
+        .booking-actions { display: flex; gap: 8px; }
+
+        /* Modal */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 500; padding: 20px; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 16px; padding: 32px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .modal-title { font-size: 20px; font-weight: 700; }
+        .modal-close { font-size: 24px; cursor: pointer; border: none; background: none; color: #666; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+
+        .empty-state { text-align: center; padding: 48px; color: #999; }
+        
+        @media (max-width: 640px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .booking-card { flex-direction: column; align-items: stretch; gap: 12px; }
+            .booking-actions { justify-content: stretch; }
+            .booking-actions .btn { flex: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div id="login-screen" class="login-screen">
+        <div class="login-box">
+            <h1 class="login-title">LUMANTI</h1>
+            <p class="login-subtitle">Staff Portal</p>
+            <form id="login-form">
+                <div class="form-group">
+                    <input type="email" id="login-email" placeholder="Email" required>
+                </div>
+                <div class="form-group">
+                    <input type="password" id="login-password" placeholder="Password" required>
+                </div>
+                <button type="submit" id="login-btn" class="btn">Login</button>
+                <p id="login-error" class="error-msg">Invalid credentials</p>
+            </form>
+        </div>
+    </div>
+
+    <div id="app" style="display: none;">
+        <header class="header">
+            <div class="logo">LUMANTI</div>
+            <div class="header-actions">
+                <button id="btn-new-booking" class="btn btn-small">+ New Booking</button>
+                <button id="btn-logout" class="btn btn-small btn-secondary">Logout</button>
+            </div>
+        </header>
+
+        <main class="container">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Today's Revenue</div>
+                    <div class="stat-value" id="stat-revenue">Rs 0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Bookings</div>
+                    <div class="stat-value" id="stat-bookings">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Day Slots Left</div>
+                    <div class="stat-value" id="stat-day">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Night Slots Left</div>
+                    <div class="stat-value" id="stat-night">0</div>
+                </div>
+            </div>
+
+            <section class="date-section">
+                <h2 class="section-title">Select Date</h2>
+                <div id="date-scroll" class="date-scroll"></div>
+            </section>
+
+            <section class="rooms-section">
+                <div class="section-header">
+                    <h2 class="section-title">Room Availability</h2>
+                    <div class="filter-tabs" id="filter-tabs">
+                        <div class="filter-tab active" data-filter="all">All</div>
+                        <div class="filter-tab" data-filter="Daycation">Day</div>
+                        <div class="filter-tab" data-filter="Staycation">Night</div>
+                    </div>
+                </div>
+                <div id="rooms-grid" class="rooms-grid"></div>
+            </section>
+
+            <section class="bookings-section">
+                <h2 class="section-title">Bookings for Selected Day</h2>
+                <div id="bookings-list" class="bookings-list"></div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Booking Modal -->
+    <div id="booking-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title" class="modal-title">New Booking</h3>
+                <button id="modal-close" class="modal-close">&times;</button>
+            </div>
+            <form id="booking-form">
+                <div class="form-group">
+                    <input type="text" id="b-name" placeholder="Guest Name" required>
+                </div>
+                <div class="form-group">
+                    <input type="tel" id="b-phone" placeholder="Phone Number" required>
+                </div>
+                <div class="form-row">
+                    <select id="b-room" required>
+                        <option value="Mini">Mini</option>
+                        <option value="Deluxe">Deluxe</option>
+                        <option value="Classic">Classic</option>
+                        <option value="Suite">Suite</option>
+                    </select>
+                    <select id="b-type" required>
+                        <option value="Daycation">Day Time (Daycation)</option>
+                        <option value="Staycation">Night Time (Staycation)</option>
+                        <option value="Full Stay">Full Stay (Day + Night)</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <input type="date" id="b-date" required>
+                    <input type="time" id="b-time">
+                </div>
+                <div class="form-group">
+                    <input type="number" id="b-amount" placeholder="Amount (Rs)" required>
+                </div>
+                <div class="form-row">
+                    <select id="b-payment">
+                        <option value="unpaid">Unpaid</option>
+                        <option value="paid">Paid</option>
+                    </select>
+                    <select id="b-status">
+                        <option value="pending">Pending</option>
+                        <option value="checked-in">Checked In</option>
+                        <option value="checked-out">Checked Out</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <button type="submit" id="btn-save" class="btn">Save Booking</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = 'https://fzwnglhxtmtltpysdzma.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6d25nbGh4dG10bHRweXNkem1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1ODE0MzAsImV4cCI6MjA4NDE1NzQzMH0.PuES2nphqkKU-FqzBge6LlptVibSfeTQcUExEdfTleg';
+        
+        // Initialize Supabase
+        let supabase;
+        try {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        } catch (e) {
+            console.error("Supabase load failed", e);
+        }
+
+        // State
+        const ROOM_TYPES = ['Mini', 'Deluxe', 'Classic', 'Suite'];
+        const CAPACITY = { Mini: 3, Deluxe: 3, Classic: 6, Suite: 3 };
+        let bookings = [];
+        let selectedDate = new Date().toISOString().split('T')[0];
+        let currentFilter = 'all';
+        let editingId = null;
+
+        // UI Helpers
+        const $ = id => document.getElementById(id);
+        const hide = el => el.style.display = 'none';
+        const show = el => el.style.display = 'block';
+
+        // Auth
+        async function checkSession() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                $('login-screen').classList.add('hidden');
+                show($('app'));
+                initApp();
+            } else {
+                $('login-screen').classList.remove('hidden');
+                hide($('app'));
+            }
+        }
+
+        $('login-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = $('login-btn');
+            btn.disabled = true;
+            btn.textContent = 'Logging in...';
+            $('login-error').style.display = 'none';
+
+            const email = $('login-email').value;
+            const password = $('login-password').value;
+
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) {
+                $('login-error').textContent = error.message;
+                $('login-error').style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Login';
+            } else {
+                checkSession();
+            }
+        };
+
+        $('btn-logout').onclick = async () => {
+            await supabase.auth.signOut();
+            checkSession();
+        };
+
+        // App Logic
+        async function initApp() {
+            renderDateScroll();
+            await loadBookings();
+            
+            // Subscribe to real-time updates
+            supabase.channel('custom-all-channel')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, (payload) => {
+                loadBookings();
+            })
+            .subscribe();
+        }
+
+        async function loadBookings() {
+            const { data, error } = await supabase
+                .from('bookings')
+                .select('*')
+                .order('created_at', { ascending: false });
+            
+            if (!error) {
+                bookings = data || [];
+                renderDashboard();
+            }
+        }
+
+        function renderDateScroll() {
+            const container = $('date-scroll');
+            container.innerHTML = '';
+            const today = new Date();
+            for (let i = 0; i < 14; i++) {
+                const d = new Date(today);
+                d.setDate(today.getDate() + i);
+                const iso = d.toISOString().split('T')[0];
+                const active = iso === selectedDate ? 'active' : '';
+                const dayName = i === 0 ? 'Today' : i === 1 ? 'Tmrw' : d.toLocaleDateString('en-US', { weekday: 'short' });
+                
+                const el = document.createElement('div');
+                el.className = `date-btn ${active}`;
+                el.innerHTML = `<div class="date-day">${dayName}</div><div class="date-number">${d.getDate()}</div>`;
+                el.onclick = () => {
+                    selectedDate = iso;
+                    renderDateScroll();
+                    renderDashboard();
+                };
+                container.appendChild(el);
+            }
+        }
+
+        function renderDashboard() {
+            const activeBookings = bookings.filter(b => b.check_in_date === selectedDate && b.status !== 'cancelled');
+            
+            // Stats
+            const revenue = activeBookings.reduce((sum, b) => sum + (b.total_amount || 0), 0);
+            $('stat-revenue').textContent = `Rs ${revenue.toLocaleString()}`;
+            $('stat-bookings').textContent = activeBookings.length;
+
+            // Slots Calculation
+            const used = { Day: {}, Night: {} };
+            ROOM_TYPES.forEach(r => { used.Day[r] = 0; used.Night[r] = 0; });
+
+            activeBookings.forEach(b => {
+                if (b.status === 'checked-out') return;
+                if (b.stay_type === 'Daycation' || b.stay_type === 'Full Stay') used.Day[b.room_type]++;
+                if (b.stay_type === 'Staycation' || b.stay_type === 'Full Stay') used.Night[b.room_type]++;
+            });
+
+            const totalDayLeft = Object.keys(CAPACITY).reduce((sum, r) => sum + Math.max(0, CAPACITY[r] - used.Day[r]), 0);
+            const totalNightLeft = Object.keys(CAPACITY).reduce((sum, r) => sum + Math.max(0, CAPACITY[r] - used.Night[r]), 0);
+            
+            $('stat-day').textContent = totalDayLeft;
+            $('stat-night').textContent = totalNightLeft;
+
+            // Rooms Grid
+            const grid = $('rooms-grid');
+            grid.innerHTML = '';
+            ROOM_TYPES.forEach(type => {
+                let avail;
+                if (currentFilter === 'Daycation') avail = CAPACITY[type] - used.Day[type];
+                else if (currentFilter === 'Staycation') avail = CAPACITY[type] - used.Night[type];
+                else avail = CAPACITY[type] - Math.max(used.Day[type], used.Night[type]);
+
+                const card = document.createElement('div');
+                card.className = `room-card ${avail > 0 ? 'available' : 'busy'}`;
+                card.innerHTML = `<div class="room-name">${type}</div><div class="room-status">${avail} Slots Free</div>`;
+                card.onclick = () => openModal(null, type);
+                grid.appendChild(card);
+            });
+
+            // Bookings List
+            const list = $('bookings-list');
+            list.innerHTML = '';
+            const dayBookings = bookings.filter(b => b.check_in_date === selectedDate);
+            if (dayBookings.length === 0) {
+                list.innerHTML = '<div class="empty-state">No bookings for this date</div>';
+            } else {
+                dayBookings.forEach(b => {
+                    const card = document.createElement('div');
+                    card.className = 'booking-card';
+                    card.innerHTML = `
+                        <div class="booking-info">
+                            <div class="booking-name">${b.full_name} <span class="status-badge status-${b.status}">${b.status}</span></div>
+                            <div class="booking-details">${b.room_type} • ${b.stay_type} • ${b.payment_status} • Rs ${b.total_amount}</div>
+                        </div>
+                        <div class="booking-actions">
+                            ${b.status === 'pending' ? `<button class="btn btn-small btn-secondary" onclick="updateStatus('${b.id}', 'checked-in')">Check In</button>` : ''}
+                            ${b.status === 'checked-in' ? `<button class="btn btn-small btn-secondary" onclick="updateStatus('${b.id}', 'checked-out')">Check Out</button>` : ''}
+                            <button class="btn btn-small" onclick="openModal('${b.id}')">Edit</button>
+                        </div>
+                    `;
+                    list.appendChild(card);
+                });
+            }
+        }
+
+        // Modal Controls
+        function openModal(id = null, defaultRoom = 'Mini') {
+            editingId = id;
+            $('booking-form').reset();
+            $('b-date').value = selectedDate;
+            $('modal-title').textContent = id ? 'Edit Booking' : 'New Booking';
+
+            if (id) {
+                const b = bookings.find(x => x.id === id);
+                if (b) {
+                    $('b-name').value = b.full_name;
+                    $('b-phone').value = b.phone_number;
+                    $('b-room').value = b.room_type;
+                    $('b-type').value = b.stay_type;
+                    $('b-date').value = b.check_in_date;
+                    $('b-time').value = b.arrival_time || '';
+                    $('b-amount').value = b.total_amount;
+                    $('b-payment').value = b.payment_status;
+                    $('b-status').value = b.status;
+                }
+            } else {
+                $('b-room').value = defaultRoom;
+            }
+            $('booking-modal').classList.add('active');
+        }
+
+        $('modal-close').onclick = () => $('booking-modal').classList.remove('active');
+        $('btn-new-booking').onclick = () => openModal();
+
+        $('booking-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const payload = {
+                full_name: $('b-name').value,
+                phone_number: $('b-phone').value,
+                room_type: $('b-room').value,
+                stay_type: $('b-type').value,
+                check_in_date: $('b-date').value,
+                arrival_time: $('b-time').value,
+                total_amount: parseFloat($('b-amount').value),
+                payment_status: $('b-payment').value,
+                status: $('b-status').value,
+                base_amount: parseFloat($('b-amount').value),
+                discount_percent: 0,
+                qr_token: 'LMT-' + Math.random().toString(36).substr(2, 6).toUpperCase()
+            };
+
+            const btn = $('btn-save');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+
+            if (editingId) {
+                delete payload.qr_token; // don't overwrite token on edit
+                await supabase.from('bookings').update(payload).eq('id', editingId);
+            } else {
+                await supabase.from('bookings').insert([payload]);
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Save Booking';
+            $('booking-modal').classList.remove('active');
+            loadBookings();
+        };
+
+        window.updateStatus = async (id, status) => {
+            await supabase.from('bookings').update({ status }).eq('id', id);
+            loadBookings();
+        };
+
+        // Filter Tabs
+        $('filter-tabs').onclick = (e) => {
+            if (e.target.dataset.filter) {
+                document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                e.target.classList.add('active');
+                currentFilter = e.target.dataset.filter;
+                renderDashboard();
+            }
+        };
+
+        // Initial check
+        checkSession();
+    </script>
+</body>
+</html>
