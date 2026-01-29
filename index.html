@@ -2456,11 +2456,11 @@ Thank you for booking with us!`;
       const successSubtitle = document.getElementById('success-subtitle');
       
       if (booking.payment_status === 'paid') {
-        successTitle.textContent = 'Payment Confirmed!';
-        successSubtitle.textContent = 'Your room is secured. Show this QR code at reception.';
+        successTitle.textContent = 'Payment Reviewing!';
+        successSubtitle.textContent = 'You will receive confirmation on WhatsApp shortly.';
       } else {
         successTitle.textContent = 'Reservation Created';
-        successSubtitle.textContent = 'Pay at hotel to confirm. Subject to availability.';
+        successSubtitle.textContent = 'Your Room will be hold for certain time until tomorrow.';
       }
 
       document.getElementById('ticket-ref').textContent = booking.qr_token;
