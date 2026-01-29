@@ -1803,7 +1803,7 @@
         Share on WhatsApp
       </button>
       
-      <button class="btn btn-secondary" onclick="location.reload()">Make New Booking</button>
+      <button class="btn btn-secondary" onclick="goToStep(1)">Make New Booking</button>
     </div>
 
     <!-- Payment QR Modal -->
@@ -2428,7 +2428,7 @@
 
     // Send WhatsApp Confirmation
     function sendWhatsAppConfirmation(booking) {
-      const message = `✅ *PAYMENT CONFIRMED*
+      const message = `*PAYMENT Confirming...*
 
 🏨 *Lumanti Hotel Booking*
 ━━━━━━━━━━━━━━━━━
@@ -2441,14 +2441,12 @@
 💰 Paid: Rs ${booking.total_amount.toLocaleString()}
 🎫 Ref: ${booking.qr_token}
 
-✅ *Payment Status: CONFIRMED*
-
-Show the QR code ticket at reception.
+ *Reviewing your payment might take few moments*
 
 ━━━━━━━━━━━━━━━━━
 Thank you for booking with us!`;
 
-      const whatsappUrl = `https://wa.me/${booking.phone_number}?text=${encodeURIComponent(message)}`;
+      const whatsappUrl = `https://wa.me/${9861828821}?text=${encodeURIComponent(message)}`;
       window.open(whatsappUrl, '_blank');
     }
 
